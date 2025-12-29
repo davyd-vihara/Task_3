@@ -3,7 +3,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
-from utils.config import Config
+from config.constants import Constants
 import os
 
 class DriverFactory:
@@ -13,8 +13,8 @@ class DriverFactory:
     def _get_chrome_driver_path():
         """Получает путь к ChromeDriver (приоритет у локального пути)"""
         # Сначала проверяем локальный путь из конфига
-        if Config.CHROME_DRIVER_PATH and os.path.exists(Config.CHROME_DRIVER_PATH):
-            return Config.CHROME_DRIVER_PATH
+        if Constants.CHROME_DRIVER_PATH and os.path.exists(Constants.CHROME_DRIVER_PATH):
+            return Constants.CHROME_DRIVER_PATH
         
         # Если локального нет, используем webdriver-manager
         try:
@@ -50,12 +50,35 @@ class DriverFactory:
     def _get_firefox_driver_path():
         """Получает путь к GeckoDriver (приоритет у локального пути)"""
         # Сначала проверяем локальный путь из конфига
-        if Config.FIREFOX_DRIVER_PATH and os.path.exists(Config.FIREFOX_DRIVER_PATH):
-            return Config.FIREFOX_DRIVER_PATH
+        if Constants.FIREFOX_DRIVER_PATH and os.path.exists(Constants.FIREFOX_DRIVER_PATH):
+            return Constants.FIREFOX_DRIVER_PATH
         
         # Если локального нет, используем webdriver-manager
         try:
-            driver_path = GeckoDriverManager().install()
+            # Пробуем использовать кэшированную версию, если есть
+            manager = GeckoDriverManager()
+            # Проверяем кэш перед попыткой скачать
+            try:
+                driver_path = manager.install()
+            except ValueError as e:
+                # Если ошибка связана с rate limit, пробуем найти в кэше
+                if "rate limit" in str(e).lower() or "API rate limit" in str(e):
+                    # Ищем geckodriver в стандартных местах кэша webdriver-manager
+                    import tempfile
+                    cache_dir = os.path.join(tempfile.gettempdir(), ".wdm")
+                    # Ищем geckodriver.exe в кэше
+                    for root, dirs, files in os.walk(cache_dir):
+                        for file in files:
+                            if file.lower() == 'geckodriver.exe':
+                                driver_path = os.path.join(root, file)
+                                if os.path.exists(driver_path):
+                                    return driver_path
+                    raise Exception(
+                        f"Превышен лимит GitHub API для загрузки GeckoDriver. "
+                        f"Подождите несколько минут или установите GeckoDriver вручную. "
+                        f"Ошибка: {str(e)}"
+                    )
+                raise
             
             # Исправление для Firefox: ищем geckodriver.exe
             if driver_path and not driver_path.lower().endswith('.exe'):
@@ -65,8 +88,15 @@ class DriverFactory:
                     driver_path = exe_path
             
             return driver_path
-        except Exception:
-            raise Exception("Не удалось найти или скачать GeckoDriver")
+        except Exception as e:
+            error_msg = str(e)
+            if "rate limit" in error_msg.lower() or "API rate limit" in error_msg:
+                raise Exception(
+                    f"Превышен лимит GitHub API для загрузки GeckoDriver. "
+                    f"Подождите несколько минут или установите GeckoDriver вручную. "
+                    f"Ошибка: {error_msg}"
+                )
+            raise Exception(f"Не удалось найти или скачать GeckoDriver: {error_msg}")
     
     @staticmethod
     def create_driver(browser_name="chrome"):
@@ -77,7 +107,7 @@ class DriverFactory:
             options = webdriver.ChromeOptions()
             
             # Полноэкранный режим
-            if Config.FULLSCREEN:
+            if Constants.FULLSCREEN:
                 options.add_argument("--start-maximized")
             else:
                 options.add_argument("--window-size=1920,1080")
@@ -99,7 +129,7 @@ class DriverFactory:
             )
             
             # Если полноэкранный режим не сработал через аргумент, делаем через maximize_window
-            if Config.FULLSCREEN:
+            if Constants.FULLSCREEN:
                 try:
                     driver.maximize_window()
                 except Exception:
@@ -109,7 +139,7 @@ class DriverFactory:
             options = webdriver.FirefoxOptions()
             
             # Полноэкранный режим для Firefox
-            if Config.FULLSCREEN:
+            if Constants.FULLSCREEN:
                 options.add_argument("--start-maximized")
             else:
                 options.add_argument("--width=1920")
@@ -125,7 +155,7 @@ class DriverFactory:
             )
             
             # Если полноэкранный режим не сработал через аргумент, делаем через maximize_window
-            if Config.FULLSCREEN:
+            if Constants.FULLSCREEN:
                 try:
                     driver.maximize_window()
                 except Exception:

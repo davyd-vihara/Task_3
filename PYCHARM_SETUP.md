@@ -113,3 +113,4 @@ C:\Users\vikharev-d\work\Task_3\venv\Scripts\pythonw.exe
    - **Python interpreter:** выберите `venv` интерпретатор
    - **Additional arguments:** `--browser=chrome -v`
 
+

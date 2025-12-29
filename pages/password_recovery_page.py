@@ -1,32 +1,38 @@
 from pages.base_page import BasePage
 from locators.password_recovery_locators import PasswordRecoveryPageLocators
-from utils.config import Config
+from config.urls import Urls
 from pages.base_page import _log_debug
 from selenium.webdriver.common.by import By
+import allure
 
 class PasswordRecoveryPage(BasePage):
     """Страница восстановления пароля"""
     
     def __init__(self, driver):
-        super().__init__(driver, f"{Config.BASE_URL}forgot-password")
+        super().__init__(driver, f"{Urls.BASE_URL}forgot-password")
         self.locators = PasswordRecoveryPageLocators()
     
+    @allure.step("Ввести email для восстановления")
     def input_email(self, email):
         """Вводит email для восстановления"""
         self.input_text(self.locators.EMAIL_INPUT, email)
     
+    @allure.step("Кликнуть по кнопке 'Восстановить'")
     def click_recover_button(self):
         """Кликает по кнопке 'Восстановить'"""
-        self.click(self.locators.RECOVER_BUTTON)
+        self.click_by_js(self.locators.RECOVER_BUTTON)
     
+    @allure.step("Кликнуть по кнопке показать/скрыть пароль")
     def click_show_password_button(self):
         """Кликает по кнопке показать/скрыть пароль"""
-        self.click(self.locators.SHOW_PASSWORD_BUTTON)
+        self.click_by_js(self.locators.SHOW_PASSWORD_BUTTON)
     
+    @allure.step("Проверить видимость формы восстановления")
     def is_recovery_form_visible(self):
         """Проверяет видимость формы восстановления"""
         return self.is_element_visible(self.locators.RECOVERY_FORM)
     
+    @allure.step("Проверить видимость поля ввода кода")
     def is_code_input_visible(self):
         """Проверяет видимость поля ввода кода"""
         # #region agent log
@@ -56,6 +62,7 @@ class PasswordRecoveryPage(BasePage):
             except:
                 return False
     
+    @allure.step("Проверить подсветку поля пароля")
     def is_password_field_highlighted(self):
         """Проверяет подсветку поля пароля"""
         try:
@@ -66,6 +73,7 @@ class PasswordRecoveryPage(BasePage):
         except:
             return False
     
+    @allure.step("Получить тип поля пароля")
     def get_password_field_type(self):
         """Получает тип поля пароля (password или text)"""
         password_field = self.find_element(self.locators.PASSWORD_INPUT)

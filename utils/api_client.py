@@ -1,17 +1,18 @@
 import requests
 import random
-from utils.config import Config
+from config.urls import Urls
+from config.constants import Constants
 
 class ApiClient:
     """Клиент для работы с API Stellar Burgers"""
     
     def __init__(self):
-        self.base_url = Config.API_URL
+        self.base_url = Urls.API_URL
     
     def register_user(self, email, password, name=None):
         """Регистрация нового пользователя"""
         if name is None:
-            name = f"{Config.TEST_USER_NAME_PREFIX}{random.randint(1000, 9999)}"
+            name = f"{Constants.TEST_USER_NAME_PREFIX}{random.randint(1000, 9999)}"
         
         url = f"{self.base_url}/auth/register"
         payload = {
@@ -21,9 +22,26 @@ class ApiClient:
         }
         
         response = requests.post(url, json=payload)
+        
+        # Проверяем статус код
         if response.status_code == 200:
-            return response.json()
+            # Проверяем, что ответ не пустой
+            if not response.text:
+                raise Exception(f"API вернул пустой ответ. Status: {response.status_code}")
+            
+            try:
+                response_data = response.json()
+            except Exception as e:
+                raise Exception(f"Не удалось распарсить JSON ответ. Status: {response.status_code}, Text: {response.text[:200]}, Error: {e}")
+            
+            # Проверяем, что в ответе есть accessToken
+            if "accessToken" not in response_data:
+                raise Exception(f"В ответе API отсутствует accessToken. Ответ: {response_data}")
+            return response_data
         else:
+            # Если пользователь уже существует (403), это нормально
+            if response.status_code == 403:
+                raise Exception(f"Пользователь уже существует: {email}")
             raise Exception(f"Ошибка регистрации: {response.status_code} - {response.text}")
     
     def login_user(self, email, password):
@@ -43,11 +61,20 @@ class ApiClient:
     def delete_user(self, access_token):
         """Удаление пользователя"""
         url = f"{self.base_url}/auth/user"
+        # В референсе используется просто токен без "Bearer " в заголовке
+        # Но API может требовать "Bearer ", поэтому пробуем оба варианта
+        token = access_token.replace("Bearer ", "") if access_token else access_token
         headers = {
-            "Authorization": f"Bearer {access_token}"
+            "Authorization": token  # Как в референсе - просто токен
         }
         
         response = requests.delete(url, headers=headers)
+        # Если не сработало с простым токеном, пробуем с Bearer
+        if response.status_code not in [200, 202]:
+            headers = {
+                "Authorization": f"Bearer {token}"
+            }
+            response = requests.delete(url, headers=headers)
         return response.status_code in [200, 202]
     
     def create_order(self, access_token, ingredients):
@@ -70,8 +97,10 @@ class ApiClient:
     def get_user_orders(self, access_token):
         """Получение заказов пользователя"""
         url = f"{self.base_url}/orders"
+        # Убираем префикс "Bearer " если он есть
+        token = access_token.replace("Bearer ", "") if access_token else access_token
         headers = {
-            "Authorization": f"Bearer {access_token}"
+            "Authorization": f"Bearer {token}"
         }
         
         response = requests.get(url, headers=headers)

@@ -5,3 +5,4 @@ class BaseLocators:
     MODAL = (By.CLASS_NAME, "Modal_modal__")
     MODAL_CLOSE_BUTTON = (By.XPATH, "//button[contains(@class, 'Modal_modal__close')]")
 
+

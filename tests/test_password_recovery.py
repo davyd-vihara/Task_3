@@ -1,6 +1,9 @@
 import allure
+import time
 from pages.login_page import LoginPage
 from pages.password_recovery_page import PasswordRecoveryPage
+from config.urls import Urls
+from config.constants import Constants
 
 @allure.feature("Восстановление пароля")
 @allure.story("Функциональность восстановления пароля")
@@ -15,43 +18,49 @@ class TestPasswordRecovery:
         with allure.step("Кликаем по ссылке 'Восстановить пароль'"):
             login_page.click_recover_password_link()
         
-        recovery_page = PasswordRecoveryPage(driver)
-        
         with allure.step("Проверяем, что открылась страница восстановления"):
-            assert recovery_page.is_recovery_form_visible(), "Форма восстановления пароля не отображается"
+            assert Urls.FORGOT_PASSWORD_PAGE in driver.current_url, "Страница восстановления пароля не открылась"
     
     @allure.title("Ввод почты для восстановления пароля")
-    def test_input_email_for_recovery(self, driver):
+    def test_input_email_for_recovery(self, driver, registered_user):
         """Проверяет ввод почты и клик по кнопке восстановления"""
-        from utils.config import Config
-        
         recovery_page = PasswordRecoveryPage(driver)
         recovery_page.open()
         
-        test_email = Config.TEST_EMAIL
+        # Используем email из созданного аккаунта
+        test_email = registered_user["email"]
         
-        with allure.step("Вводим email"):
+        with allure.step("Вводим email из созданного аккаунта"):
             recovery_page.input_email(test_email)
         
         with allure.step("Кликаем по кнопке 'Восстановить'"):
             recovery_page.click_recover_button()
         
-        with allure.step("Проверяем отображение формы ввода кода"):
-            # После клика должна появиться форма ввода кода
-            assert recovery_page.is_code_input_visible(), "Форма ввода кода не отображается"
+        with allure.step("Ожидаем перехода на страницу ввода кода"):
+            # Ждем перехода на страницу reset-password
+            time.sleep(Constants.TIMEOUT_SHORT)
+            
+            # Проверяем, что произошел переход на страницу ввода кода
+            recovery_page.wait_for_url_contains("/reset-password", timeout=10)
+        
+        with allure.step("Проверяем переход на страницу ввода кода"):
+            # После клика должна открыться страница reset-password
+            assert Urls.RESET_PASSWORD_PAGE in driver.current_url, "Страница ввода кода не открылась"
     
     @allure.title("Показать/скрыть пароль подсвечивает поле")
-    def test_password_visibility_toggle(self, driver):
+    def test_password_visibility_toggle(self, driver, registered_user):
         """Проверяет подсветку поля при клике на иконку глаза"""
-        from utils.config import Config
-        
         recovery_page = PasswordRecoveryPage(driver)
         recovery_page.open()
         
-        # Сначала вводим email и переходим к форме ввода нового пароля
-        test_email = Config.TEST_EMAIL
+        # Сначала вводим email из созданного аккаунта и переходим к форме ввода нового пароля
+        test_email = registered_user["email"]
         recovery_page.input_email(test_email)
         recovery_page.click_recover_button()
+        
+        # Ждем перехода на страницу ввода кода
+        time.sleep(Constants.TIMEOUT_SHORT)
+        recovery_page.wait_for_url_contains("/reset-password", timeout=10)
         
         # Ждем появления поля пароля (может потребоваться ввод кода)
         # Для теста предположим, что поле пароля уже доступно

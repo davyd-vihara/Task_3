@@ -5,4 +5,5 @@ allure-pytest==2.13.2
 python-dotenv==1.0.0
 requests==2.31.0
 pytest-xdist==3.5.0
+seletools==1.3.0
 

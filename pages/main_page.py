@@ -35,68 +35,20 @@ class MainPage(BasePage):
     @allure.step("Кликнуть по кнопке 'Личный кабинет'")
     def click_personal_account_button(self):
         """Кликает по кнопке 'Личный кабинет'"""
-        # #region agent log
-        import json
-        log_path = r"c:\Git\master\perfect-project\.cursor\debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "main_page.py:35", "message": "Before clicking personal account button", "data": {"current_url": self.driver.current_url}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         self.wait_for_page_load()
         self.click_by_js(self.locators.PERSONAL_ACCOUNT_BUTTON)
-        # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "main_page.py:40", "message": "After clicking personal account button", "data": {"current_url": self.driver.current_url}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
     
     @allure.step("Кликнуть по первому ингредиенту из булок")
     def click_first_bun_ingredient(self):
-        """Кликает по первому ингредиенту из булок (Флюоресцентная булка R2-D3)"""
+        """Кликает по первому ингредиенту из булок"""
         import time
-        from pages.base_page import _log_debug
+        time.sleep(2)
         
-        # #region agent log
-        _log_debug("debug-session", "run1", "A", "main_page.py:click_first_bun_ingredient", "Начало поиска ингредиента", {
-            "locator": str(self.locators.FIRST_BUN_INGREDIENT),
-            "url": self.driver.current_url
-        })
-        # #endregion
-        
-        time.sleep(2)  # Ждем загрузки страницы
-        
-        # #region agent log
-        # Проверяем наличие всех ингредиентов на странице
-        all_ingredients = self.driver.find_elements("xpath", "//a[contains(@class, 'BurgerIngredient_ingredient')]")
-        bun_texts = []
-        for ing in all_ingredients[:5]:  # Первые 5 для проверки
-            try:
-                p_elements = ing.find_elements("xpath", ".//p")
-                for p in p_elements:
-                    if p.text:
-                        bun_texts.append(p.text)
-            except:
-                pass
-        _log_debug("debug-session", "run1", "A", "main_page.py:click_first_bun_ingredient", "Найдено ингредиентов на странице", {
-            "total_ingredients": len(all_ingredients),
-            "first_5_texts": bun_texts
-        })
-        # #endregion
-        
-        # Пробуем найти ингредиент по точному тексту, если не найдем - используем первый из булок
         try:
             ingredient = self.find_visible_element(self.locators.FIRST_BUN_INGREDIENT, timeout=5)
         except:
-            # Если не нашли по точному тексту, ищем первый ингредиент из булок
-            # #region agent log
-            _log_debug("debug-session", "run1", "A", "main_page.py:click_first_bun_ingredient", "Не найден по точному тексту, ищем первый ингредиент", {
-                "fallback_locator": "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"
-            })
-            # #endregion
             ingredient = self.find_visible_element((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"), timeout=10)
-        # Прокручиваем к ингредиенту и кликаем через JS
+        
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", ingredient)
         time.sleep(0.5)
         self.driver.execute_script("arguments[0].click();", ingredient)
@@ -148,24 +100,8 @@ class MainPage(BasePage):
     @allure.step("Перетащить ингредиент в конструктор")
     def drag_ingredient_to_constructor(self, ingredient_locator):
         """Перетаскивает ингредиент в конструктор"""
-        from pages.base_page import _log_debug
-        
-        # #region agent log
-        _log_debug("debug-session", "run1", "A", "main_page.py:drag_ingredient_to_constructor", "Начало перетаскивания", {
-            "ingredient_locator": str(ingredient_locator),
-            "constructor_locator": str(self.locators.CONSTRUCTOR_AREA)
-        })
-        # #endregion
-        
         ingredient = self.find_visible_element(ingredient_locator)
         constructor = self.find_visible_element(self.locators.CONSTRUCTOR_AREA)
-        
-        # #region agent log
-        _log_debug("debug-session", "run1", "A", "main_page.py:drag_ingredient_to_constructor", "Элементы найдены, выполнение drag_and_drop", {
-            "ingredient_tag": ingredient.tag_name,
-            "constructor_tag": constructor.tag_name
-        })
-        # #endregion
         
         # Используем метод из base_page, который использует seletools для надежной работы в Firefox
         self.drag_and_drop_element(ingredient, constructor)

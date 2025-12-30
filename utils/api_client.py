@@ -61,11 +61,11 @@ class ApiClient:
     def delete_user(self, access_token):
         """Удаление пользователя"""
         url = f"{self.base_url}/auth/user"
-        # В референсе используется просто токен без "Bearer " в заголовке
+        # Используется просто токен без "Bearer " в заголовке
         # Но API может требовать "Bearer ", поэтому пробуем оба варианта
         token = access_token.replace("Bearer ", "") if access_token else access_token
         headers = {
-            "Authorization": token  # Как в референсе - просто токен
+            "Authorization": token
         }
         
         response = requests.delete(url, headers=headers)

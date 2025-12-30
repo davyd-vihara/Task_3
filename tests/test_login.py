@@ -28,7 +28,7 @@ class TestLogin:
 
         with allure.step("Проверяем, что открылась главная страница"):
             # Ждем загрузки главной страницы
-            time.sleep(Constants.TIMEOUT_SHORT)
+            time.sleep(Constants.TIMEOUT)
             main_page.open()
             main_page.wait_for_page_load()
             assert Urls.BASE_URL.rstrip('/') in driver.current_url or driver.current_url.startswith(Urls.BASE_URL), \
@@ -39,7 +39,7 @@ class TestLogin:
             main_page.click_personal_account_button()
             
             # Ждем загрузки страницы профиля
-            time.sleep(Constants.TIMEOUT_SHORT)
+            time.sleep(Constants.TIMEOUT)
             
             # Проверяем, что открылась страница профиля
             profile_page = ProfilePage(driver)

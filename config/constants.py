@@ -12,7 +12,7 @@ class Constants:
     
     # Пути к драйверам (приоритет у локальных путей)
     CHROME_DRIVER_PATH = os.getenv("CHROME_DRIVER_PATH", r"C:\WebDriver\chromedriver-win64\chromedriver.exe")
-    FIREFOX_DRIVER_PATH = os.getenv("FIREFOX_DRIVER_PATH", "")
+    FIREFOX_DRIVER_PATH = os.getenv("FIREFOX_DRIVER_PATH", r"C:\WebDriver\geckodriver-v0.36.0-win64\geckodriver.exe")
     
     # Режим запуска браузера
     FULLSCREEN = os.getenv("FULLSCREEN", "true").lower() == "true"
@@ -34,9 +34,9 @@ class Constants:
     LOGIN_TITLE = "Вход"
     
     # Таймауты (в секундах)
-    TIMEOUT_SHORT = 2
-    TIMEOUT_MEDIUM = 3
-    TIMEOUT_LONG = 4
-    TIMEOUT_MODAL_LOAD = 30
-    TIMEOUT_ELEMENT = 10
+    TIMEOUT = 1
+    TIMEOUT_MODAL_LOAD = 3
+    
+    # Оптимизация: переиспользование браузера (true/false)
+    REUSE_BROWSER = os.getenv("REUSE_BROWSER", "false").lower() == "true"
 

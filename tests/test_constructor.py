@@ -1,7 +1,6 @@
 import allure
 from pages.constructor_page import ConstructorPage
 from pages.order_feed_page import OrderFeedPage
-from config.urls import Urls
 from config.constants import Constants
 
 
@@ -108,7 +107,7 @@ class TestConstructor:
         
         with allure.step("Ждем открытия модального окна и проверяем, что окно открыто"):
             import time
-            time.sleep(Constants.TIMEOUT_SHORT)
+            time.sleep(Constants.TIMEOUT)
             assert main_page.is_modal_visible(), "Модальное окно с деталями ингредиента не появилось"
         
         with allure.step(f"Проверяем наличие заголовка '{Constants.INGREDIENT_DETAILS_TITLE}'"):
@@ -198,7 +197,7 @@ class TestConstructor:
                 attachment_type=allure.attachment_type.TEXT
             )
             
-            # Открываем главную страницу (как в референсе)
+            # Открываем главную страницу
             main_page.open()
             main_page.wait_for_page_load()
             
@@ -213,7 +212,7 @@ class TestConstructor:
             # Выполняем авторизацию используя данные из фикстуры registered_user
             login_page.login(user_email, user_password)
             
-            # Ждем перехода на главную страницу (как в референсе)
+            # Ждем перехода на главную страницу
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
             from selenium.webdriver.common.by import By
@@ -229,7 +228,7 @@ class TestConstructor:
             
             # Даем время на сохранение токена в cookies/localStorage и обновление UI
             import time
-            time.sleep(Constants.TIMEOUT_MEDIUM)
+            time.sleep(Constants.TIMEOUT)
             
             # Проверяем авторизацию
             assert main_page.is_user_logged_in(), \

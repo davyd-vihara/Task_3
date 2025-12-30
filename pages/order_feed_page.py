@@ -16,22 +16,7 @@ class OrderFeedPage(BasePage):
     @allure.step("Проверить видимость заголовка 'Лента заказов'")
     def is_order_feed_title_visible(self):
         """Проверяет видимость заголовка 'Лента заказов'"""
-        # #region agent log
-        import json
-        log_path = r"c:\Git\master\perfect-project\.cursor\debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "order_feed_page.py:17", "message": "Checking order feed title visibility", "data": {"locator": str(self.locators.ORDER_FEED_TITLE)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
-        result = self.is_element_visible(self.locators.ORDER_FEED_TITLE)
-        # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "order_feed_page.py:19", "message": "Order feed title visibility result", "data": {"visible": result}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
-        return result
+        return self.is_element_visible(self.locators.ORDER_FEED_TITLE)
     
     @allure.step("Кликнуть по первому заказу")
     def click_first_order(self):
@@ -147,126 +132,41 @@ class OrderFeedPage(BasePage):
     @allure.step("Проверить, есть ли заказ в разделе 'В работе'")
     def is_order_in_progress(self, order_number):
         """Проверяет, есть ли заказ в разделе 'В работе'"""
-        # #region agent log
-        import json
-        log_path = r"c:\Git\master\perfect-project\.cursor\debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:133", "message": "is_order_in_progress started", "data": {"order_number": order_number}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
-        
         import re
-        # Нормализуем номер заказа - оставляем только цифры
         order_num_normalized = re.sub(r'\D', '', str(order_number))
         
         # Сначала пробуем найти через текст раздела "В работе"
         try:
-            # Ищем раздел "В работе" и получаем его текст
             section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=2)
-            section_text = section.text
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:145", "message": "Found In Progress section", "data": {"section_text": section_text[:200]}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
-            # Нормализуем текст раздела - оставляем только цифры
-            section_text_normalized = re.sub(r'\D', '', section_text)
-            # Проверяем, содержится ли номер заказа в тексте
+            section_text_normalized = re.sub(r'\D', '', section.text)
             if order_num_normalized in section_text_normalized:
-                # #region agent log
-                try:
-                    with open(log_path, "a", encoding="utf-8") as f:
-                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:152", "message": "Order found in section text", "data": {"found": True}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-                except: pass
-                # #endregion
                 return True
-        except Exception as e:
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:159", "message": "Error finding section", "data": {"error": str(e)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
+        except Exception:
             pass
         
-        # Пробуем найти через элементы списка (если они есть)
+        # Пробуем найти через элементы списка
         try:
             in_progress_elements = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=2)
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:145", "message": "Found elements via locator", "data": {"element_count": len(in_progress_elements)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             for element in in_progress_elements:
                 try:
-                    element_text = element.text
-                    element_text_normalized = re.sub(r'\D', '', str(element_text))
-                    # #region agent log
-                    try:
-                        with open(log_path, "a", encoding="utf-8") as f:
-                            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:152", "message": "Comparing order numbers", "data": {"order_num_normalized": order_num_normalized, "element_text_normalized": element_text_normalized}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-                    except: pass
-                    # #endregion
+                    element_text_normalized = re.sub(r'\D', '', str(element.text))
                     if order_num_normalized in element_text_normalized or element_text_normalized in order_num_normalized:
-                        # #region agent log
-                        try:
-                            with open(log_path, "a", encoding="utf-8") as f:
-                                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:156", "message": "Order found via direct locator", "data": {"found": True}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-                        except: pass
-                        # #endregion
                         return True
                 except Exception:
                     continue
-        except Exception as e:
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:163", "message": "Error finding elements via locator", "data": {"error": str(e)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
+        except Exception:
             pass
         
-        # Если не нашли напрямую, пробуем через get_in_progress_orders (может быть медленнее)
+        # Если не нашли, пробуем через get_in_progress_orders
         try:
-            # Получаем список заказов в работе
             orders = self.get_in_progress_orders()
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:171", "message": "Got orders via get_in_progress_orders", "data": {"order_count": len(orders)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
-            # Проверяем каждый заказ
             for order_text in orders:
-                # Нормализуем текст заказа - оставляем только цифры
                 order_text_normalized = re.sub(r'\D', '', str(order_text))
-                # Проверяем, содержится ли номер заказа в тексте
                 if order_num_normalized in order_text_normalized or order_text_normalized in order_num_normalized:
-                    # #region agent log
-                    try:
-                        with open(log_path, "a", encoding="utf-8") as f:
-                            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:179", "message": "Order found via get_in_progress_orders", "data": {"found": True}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-                    except: pass
-                    # #endregion
                     return True
-        except Exception as e:
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:185", "message": "Error getting orders", "data": {"error": str(e)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
+        except Exception:
             pass
         
-        # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "order_feed_page.py:191", "message": "Order not found", "data": {"found": False}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         return False
     
     @allure.step("Проверить наличие номера заказа в модальном окне")

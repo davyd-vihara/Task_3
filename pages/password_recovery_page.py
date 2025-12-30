@@ -1,7 +1,6 @@
 from pages.base_page import BasePage
 from locators.password_recovery_locators import PasswordRecoveryPageLocators
 from config.urls import Urls
-from pages.base_page import _log_debug
 from selenium.webdriver.common.by import By
 import allure
 
@@ -35,20 +34,8 @@ class PasswordRecoveryPage(BasePage):
     @allure.step("Проверить видимость поля ввода кода")
     def is_code_input_visible(self):
         """Проверяет видимость поля ввода кода"""
-        # #region agent log
-        _log_debug("debug-session", "run1", "C", "password_recovery_page.py:is_code_input_visible", "Проверка видимости поля ввода кода", {
-            "locator": str(self.locators.CODE_INPUT),
-            "url": self.driver.current_url
-        })
-        # #endregion
-        # Проверяем, что мы на странице reset-password
         current_url = self.get_current_url()
         if "reset-password" not in current_url:
-            # #region agent log
-            _log_debug("debug-session", "run1", "C", "password_recovery_page.py:is_code_input_visible", "Не на странице reset-password", {
-                "current_url": current_url
-            })
-            # #endregion
             return False
         
         # Ищем label с текстом "Введите код"

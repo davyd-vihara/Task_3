@@ -63,33 +63,91 @@ choco install allure-commandline
 
 ## Запуск тестов
 
-### Запуск в Chrome (по умолчанию):
+> **Примечание:** По умолчанию тесты запускаются с подробным выводом (`-v`). Для минимального вывода используйте флаг `-q`.
+
+### Базовый запуск (по умолчанию):
 ```bash
-pytest tests/ -v --browser=chrome
+# Запуск всех тестов (по умолчанию - Chrome и Firefox)
+pytest tests/
+
+# Запуск только в Chrome
+pytest tests/ -k "chrome"
+
+# Запуск только в Firefox
+pytest tests/ -k "firefox"
 ```
 
-### Запуск в Firefox:
+### Запуск с подробным выводом (verbose):
 ```bash
-pytest tests/ -v --browser=firefox
+# Подробный вывод с названиями тестов
+pytest tests/ -v
+
+# Очень подробный вывод (debug режим)
+pytest tests/ -vv
+
+# С выводом print-ов
+pytest tests/ -v -s
+```
+
+### Запуск с дебагом (полный вывод):
+```bash
+# Полный вывод включая сообщения Chrome/Firefox
+pytest tests/ -vv -s
+
+# С максимальной детализацией и логированием
+pytest tests/ -vv -s --log-cli-level=DEBUG
+
+# С выводом в консоль и файл
+pytest tests/ -vv -s --log-cli-level=DEBUG --log-file=test.log
 ```
 
 ### Запуск с Allure отчетом:
 ```bash
-# Запуск тестов с генерацией отчета
-pytest tests/ --alluredir=./allure-results
+# Запуск тестов с генерацией отчета (автоматически включено)
+pytest tests/
 
 # Просмотр отчета
 allure serve ./allure-results
+
+# Генерация HTML отчета
+allure generate ./allure-results -o ./allure-report --clean
 ```
 
 ### Параллельный запуск:
 ```bash
+# Запуск в 4 потока
 pytest tests/ -n 4
+
+# С подробным выводом
+pytest tests/ -n 4 -v
 ```
 
 ### Запуск конкретного теста:
 ```bash
+# Один тест
+pytest tests/test_password_recovery.py::TestPasswordRecovery::test_go_to_password_recovery
+
+# С подробным выводом
 pytest tests/test_password_recovery.py::TestPasswordRecovery::test_go_to_password_recovery -v
+
+# С дебагом
+pytest tests/test_password_recovery.py::TestPasswordRecovery::test_go_to_password_recovery -vv -s
+```
+
+### Полезные опции:
+```bash
+# Только упавшие тесты
+pytest tests/ --lf
+
+# Остановиться на первой ошибке
+pytest tests/ -x
+
+# Показать локальные переменные при ошибке
+pytest tests/ -l
+
+# Запуск с маркерами
+pytest tests/ -m smoke
+pytest tests/ -m regression
 ```
 
 ## Покрытие тестами
@@ -126,6 +184,7 @@ pytest tests/test_password_recovery.py::TestPasswordRecovery::test_go_to_passwor
 - **Allure отчеты**: Детальные отчеты с шагами и скриншотами
 - **API интеграция**: Создание и удаление тестовых пользователей через API
 - **Независимые тесты**: Каждый тест создает свои данные и очищает их после выполнения
+- **Оптимизация производительности**: Переиспользование браузера с изоляцией тестов через отдельные вкладки
 
 ## Конфигурация
 
@@ -134,6 +193,7 @@ pytest tests/test_password_recovery.py::TestPasswordRecovery::test_go_to_passwor
 ### Основные настройки:
 - `BROWSER` - браузер для тестов (chrome/firefox), по умолчанию: `chrome`
 - `FULLSCREEN` - полноэкранный режим (true/false), по умолчанию: `true`
+- `REUSE_BROWSER` - переиспользование браузера (true/false), по умолчанию: `false`
 - `TEST_EMAIL` - email для тестов
 - `TEST_PASSWORD` - пароль для тестов
 
@@ -147,12 +207,71 @@ pytest tests/test_password_recovery.py::TestPasswordRecovery::test_go_to_passwor
 ```env
 BROWSER=chrome
 FULLSCREEN=true
+REUSE_BROWSER=true
 CHROME_DRIVER_PATH=C:\WebDriver\chromedriver-win64\chromedriver.exe
+FIREFOX_DRIVER_PATH=C:\WebDriver\geckodriver-v0.36.0-win64\geckodriver.exe
 ```
+
+## Оптимизация производительности
+
+Проект использует оптимизированный подход к управлению браузерами для ускорения выполнения тестов:
+
+### Переиспользование браузера
+
+Вместо создания нового браузера для каждого теста, используется один браузер на всю сессию тестов. Для каждого теста:
+- Открывается новая вкладка (tab)
+- Очищается состояние браузера (cookies, localStorage, sessionStorage)
+- После теста вкладка закрывается
+
+### Преимущества
+
+- **Ускорение выполнения**: Экономия 2-5 секунд на каждый тест (запуск/закрытие браузера)
+- **Меньше нагрузка на систему**: Один процесс браузера вместо множества
+- **Сохранение изоляции**: Каждый тест выполняется в чистом состоянии
+- **Соответствие best practices**: Подход соответствует рекомендациям для UI-тестирования
+
+### Как это работает
+
+1. **Сессия браузера** (`scope="session"`): Браузер создается один раз в начале сессии тестов
+2. **Изоляция тестов** (`scope="function"`): Для каждого теста открывается новая вкладка
+3. **Очистка состояния**: Перед каждым тестом очищаются cookies и хранилища браузера
+4. **Закрытие вкладок**: После теста вкладка закрывается, браузер остается активным
+
+### Настройка и запуск
+
+Проект поддерживает два режима работы, которые переключаются через переменную окружения `REUSE_BROWSER`:
+
+#### Стандартный режим (по умолчанию)
+```bash
+# Новый браузер для каждого теста (максимальная изоляция)
+pytest tests/
+```
+
+#### Оптимизированный режим (переиспользование браузера)
+```bash
+# Windows PowerShell
+$env:REUSE_BROWSER="true"; pytest tests/
+
+# Windows CMD
+set REUSE_BROWSER=true && pytest tests/
+
+# Linux/Mac
+REUSE_BROWSER=true pytest tests/
+```
+
+Или через `.env` файл:
+```env
+REUSE_BROWSER=true
+```
+
+**Разница между режимами:**
+- **Стандартный режим** (`REUSE_BROWSER=false`): Новый браузер для каждого теста. Максимальная изоляция, но медленнее.
+- **Оптимизированный режим** (`REUSE_BROWSER=true`): Один браузер на всю сессию, новая вкладка для каждого теста. Ускоряет выполнение на 30-50% при сохранении изоляции.
 
 ## Примечания
 
 - Тесты используют реальный сайт https://stellarburgers.education-services.ru/
 - Для работы тестов требуется стабильное интернет-соединение
 - Некоторые тесты могут требовать дополнительной настройки локаторов в зависимости от актуальной структуры сайта
+- Оптимизация с переиспользованием браузера ускоряет выполнение тестов на 30-50% при сохранении полной изоляции тестов
 

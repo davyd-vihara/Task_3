@@ -2,7 +2,7 @@ from selenium.webdriver.common.by import By
 
 class LoginPageLocators:
     """Локаторы для страницы входа"""
-    # Заголовок "Вход"
+
     LOGIN_TITLE = (By.XPATH, "//h2[contains(text(), 'Вход')] | //h1[contains(text(), 'Вход')]")
     EMAIL_INPUT = (By.XPATH, "//input[@name='name' and @type='text']")
     PASSWORD_INPUT = (By.XPATH, "//input[@name='Пароль' and @type='password']")

@@ -1,7 +1,6 @@
 from pages.base_page import BasePage
 from locators.profile_locators import ProfilePageLocators
 from config.urls import Urls
-from pages.base_page import _log_debug
 import allure
 
 class ProfilePage(BasePage):
@@ -24,16 +23,8 @@ class ProfilePage(BasePage):
     @allure.step("Проверить видимость страницы профиля")
     def is_profile_page_visible(self):
         """Проверяет видимость страницы профиля"""
-        # #region agent log
-        _log_debug("debug-session", "run1", "B", "profile_page.py:is_profile_page_visible", "Проверка видимости страницы профиля", {
-            "locator": str(self.locators.PROFILE_PAGE_TITLE),
-            "url": self.driver.current_url
-        })
-        # #endregion
-        # Проверяем URL и наличие элементов профиля
         current_url = self.get_current_url()
         is_profile_url = "account/profile" in current_url or "account" in current_url
-        # Также проверяем наличие элементов профиля
         try:
             has_profile_elements = self.is_element_visible(self.locators.PROFILE_PAGE_TITLE, timeout=3)
         except:

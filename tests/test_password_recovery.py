@@ -38,7 +38,7 @@ class TestPasswordRecovery:
         
         with allure.step("Ожидаем перехода на страницу ввода кода"):
             # Ждем перехода на страницу reset-password
-            time.sleep(Constants.TIMEOUT_SHORT)
+            time.sleep(Constants.TIMEOUT)
             
             # Проверяем, что произошел переход на страницу ввода кода
             recovery_page.wait_for_url_contains("/reset-password", timeout=10)
@@ -59,7 +59,7 @@ class TestPasswordRecovery:
         recovery_page.click_recover_button()
         
         # Ждем перехода на страницу ввода кода
-        time.sleep(Constants.TIMEOUT_SHORT)
+        time.sleep(Constants.TIMEOUT)
         recovery_page.wait_for_url_contains("/reset-password", timeout=10)
         
         # Ждем появления поля пароля (может потребоваться ввод кода)

@@ -37,6 +37,7 @@ class OrderFeedPageLocators:
     TODAY_ORDERS_COUNTER = (By.XPATH, "//p[contains(text(), 'Выполнено за сегодня')]/following-sibling::p")
     
     # Раздел "В работе"
-    IN_PROGRESS_SECTION = (By.XPATH, "//div[contains(@class, 'OrderFeed_orderListReady__')]")
-    IN_PROGRESS_ORDERS = (By.XPATH, "//div[contains(@class, 'OrderFeed_orderListReady__')]//li")
+    # Из структуры страницы: класс OrderFeed_ordersData__1L6Iv содержит текст "В работе:"
+    IN_PROGRESS_SECTION = (By.XPATH, "//div[contains(@class, 'OrderFeed_ordersData__')] | //div[contains(text(), 'В работе:')]")
+    IN_PROGRESS_ORDERS = (By.XPATH, "//div[contains(@class, 'OrderFeed_ordersData__')]//li | //div[contains(text(), 'В работе:')]//li")
 

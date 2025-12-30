@@ -35,8 +35,22 @@ class MainPage(BasePage):
     @allure.step("Кликнуть по кнопке 'Личный кабинет'")
     def click_personal_account_button(self):
         """Кликает по кнопке 'Личный кабинет'"""
+        # #region agent log
+        import json
+        log_path = r"c:\Git\master\perfect-project\.cursor\debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "main_page.py:35", "message": "Before clicking personal account button", "data": {"current_url": self.driver.current_url}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
+        except: pass
+        # #endregion
         self.wait_for_page_load()
         self.click_by_js(self.locators.PERSONAL_ACCOUNT_BUTTON)
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "main_page.py:40", "message": "After clicking personal account button", "data": {"current_url": self.driver.current_url}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
+        except: pass
+        # #endregion
     
     @allure.step("Кликнуть по первому ингредиенту из булок")
     def click_first_bun_ingredient(self):

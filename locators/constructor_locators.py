@@ -6,3 +6,6 @@ class ConstructorPageLocators:
     INGREDIENT_LIST = (By.CLASS_NAME, "BurgerIngredients_ingredients__")
 
 
+
+
+

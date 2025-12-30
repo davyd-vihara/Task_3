@@ -193,6 +193,33 @@ def order_feed_page(driver, opened_main_page):
     order_feed_page = OrderFeedPage(driver)
     return order_feed_page
 
+
+def pytest_collection_modifyitems(config, items):
+    """Изменяет порядок выполнения тестов: сначала все на Chrome, потом на Firefox"""
+    # Группируем тесты по браузеру
+    chrome_tests = []
+    firefox_tests = []
+    other_tests = []
+    
+    for item in items:
+        # Проверяем id теста - для параметризованных фикстур формат: test_name[param_value]
+        test_id = item.nodeid
+        
+        if '[chrome]' in test_id:
+            chrome_tests.append(item)
+        elif '[firefox]' in test_id:
+            firefox_tests.append(item)
+        else:
+            other_tests.append(item)
+    
+    # Переупорядочиваем: сначала все Chrome тесты, потом все Firefox тесты, затем остальные
+    items[:] = chrome_tests + firefox_tests + other_tests
+    
+    # Отладочный вывод (можно убрать после проверки)
+    if config.option.verbose >= 1:
+        print(f"\n[DEBUG] Переупорядочивание тестов: Chrome={len(chrome_tests)}, Firefox={len(firefox_tests)}, Other={len(other_tests)}")
+
+
 # Хуки для Allure
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):

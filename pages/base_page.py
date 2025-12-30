@@ -1,6 +1,6 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 import allure
 import json
 import os
@@ -48,8 +48,13 @@ class BasePage:
     @allure.step("Найти все элементы")
     def find_elements(self, locator, timeout=10):
         """Находит все элементы с ожиданием"""
-        wait = WebDriverWait(self.driver, timeout)
-        return wait.until(EC.presence_of_all_elements_located(locator))
+        try:
+            wait = WebDriverWait(self.driver, timeout)
+            return wait.until(EC.presence_of_all_elements_located(locator))
+        except (TimeoutException, WebDriverException):
+            return []
+        except Exception:
+            return []
     
     @allure.step("Найти видимый элемент")
     def find_visible_element(self, locator, timeout=10):
@@ -141,11 +146,21 @@ class BasePage:
             })
             # #endregion
             return is_visible
-        except TimeoutException:
+        except (TimeoutException, WebDriverException) as e:
             # #region agent log
-            _log_debug("debug-session", "run1", "B", "base_page.py:is_element_visible", "Элемент не найден (TimeoutException)", {
+            _log_debug("debug-session", "run1", "B", "base_page.py:is_element_visible", f"Элемент не найден ({type(e).__name__})", {
                 "locator": str(locator),
-                "timeout": timeout
+                "timeout": timeout,
+                "error": str(e)
+            })
+            # #endregion
+            return False
+        except Exception as e:
+            # #region agent log
+            _log_debug("debug-session", "run1", "B", "base_page.py:is_element_visible", f"Неожиданная ошибка ({type(e).__name__})", {
+                "locator": str(locator),
+                "timeout": timeout,
+                "error": str(e)
             })
             # #endregion
             return False

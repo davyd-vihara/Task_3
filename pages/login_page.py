@@ -2,6 +2,9 @@ from pages.base_page import BasePage
 from locators.login_locators import LoginPageLocators
 from config.urls import Urls
 import allure
+import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 class LoginPage(BasePage):
     """Страница входа"""
@@ -49,8 +52,6 @@ class LoginPage(BasePage):
         self.click_login_button()
         
         # Ждем перехода на главную страницу после успешного входа
-        from selenium.webdriver.support.ui import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as EC
         wait = WebDriverWait(self.driver, 15)
         
         # Ждем, пока URL изменится (уйдет со страницы логина)
@@ -58,7 +59,6 @@ class LoginPage(BasePage):
             wait.until(lambda d: "/login" not in d.current_url)
         except Exception:
             # Если не перешли, проверяем, что хотя бы URL изменился
-            import time
             time.sleep(2)
             url_after = self.get_current_url()
             if url_before == url_after:
@@ -69,7 +69,6 @@ class LoginPage(BasePage):
                 )
         
         # Даем время на сохранение токена в cookies/localStorage
-        import time
         time.sleep(2)
     
     @allure.step("Проверить видимость формы входа")

@@ -91,21 +91,8 @@ class MainPage(BasePage):
     @allure.step("Получить название ингредиента из модального окна")
     def get_modal_ingredient_name(self):
         """Получает название ингредиента из модального окна"""
-        try:
-            return self.get_text(self.locators.MODAL_INGREDIENT_NAME)
-        except Exception:
-            # Если не нашли по локатору, пробуем найти любой текст в модальном окне
-            try:
-                modal = self.find_element(self.locators.MODAL)
-                # Ищем текст, который может быть названием ингредиента
-                name_elements = modal.find_elements("xpath", ".//p[contains(@class, 'text')] | .//h3")
-                for elem in name_elements:
-                    text = elem.text.strip()
-                    if text and text != "Детали ингредиента" and len(text) > 3:
-                        return text
-                return ""
-            except Exception:
-                return ""
+        # Линейный сценарий без ветвлений - просто получаем текст по локатору
+        return self.get_text(self.locators.MODAL_INGREDIENT_NAME)
     
     @allure.step("Перетащить ингредиент в конструктор")
     def drag_ingredient_to_constructor(self, ingredient_locator):
@@ -121,14 +108,12 @@ class MainPage(BasePage):
         """Ожидает, пока счетчик ингредиента станет больше 0"""
         if timeout is None:
             timeout = Constants.TIMEOUT_MEDIUM
-        try:
-            self.get_wait(timeout).until(
-                lambda d: int(
-                    d.find_element(*self.locators.INGREDIENT_COUNTER_VALUE).text or 0
-                ) > 0
-            )
-        except (TimeoutException, NoSuchElementException, ValueError):
-            pass  # Если счетчик не появился, продолжаем
+        # Линейный сценарий без ветвлений - просто ждем появления счетчика
+        self.get_wait(timeout).until(
+            lambda d: int(
+                d.find_element(*self.locators.INGREDIENT_COUNTER_VALUE).text or 0
+            ) > 0
+        )
     
     @allure.step("Получить счетчик ингредиента")
     def get_ingredient_counter(self, ingredient_locator):
@@ -157,21 +142,14 @@ class MainPage(BasePage):
     @allure.step("Проверить, что пользователь авторизован")
     def is_user_logged_in(self):
         """Проверяет, что пользователь авторизован (кнопка 'Оформить заказ' видна или кнопка 'Войти в аккаунт' НЕ видна)"""
-        try:
-            # Проверяем, что кнопка "Оформить заказ" видна
-            if self.is_element_visible(self.locators.ORDER_BUTTON, timeout=Constants.TIMEOUT_MODAL_LOAD):
-                return True
-        except Exception:
-            pass
+        # Линейный сценарий: проверяем видимость кнопки "Оформить заказ"
+        if self.is_element_visible(self.locators.ORDER_BUTTON, timeout=Constants.TIMEOUT_MODAL_LOAD):
+            return True
         
         # Если кнопка "Оформить заказ" не видна, проверяем, что кнопка "Войти в аккаунт" НЕ видна
         # (это тоже признак авторизации)
-        try:
-            login_button_visible = self.is_element_visible(self.locators.LOGIN_BUTTON, timeout=Constants.TIMEOUT_SHORT)
-            return not login_button_visible  # Если кнопка входа не видна, значит авторизованы
-        except Exception:
-            # Если не можем найти кнопку входа, считаем что авторизованы
-            return True
+        login_button_visible = self.is_element_visible(self.locators.LOGIN_BUTTON, timeout=Constants.TIMEOUT_SHORT)
+        return not login_button_visible  # Если кнопка входа не видна, значит авторизованы
     
     @allure.step("Кликнуть по кнопке 'Оформить заказ'")
     def click_order_button(self):
@@ -184,13 +162,10 @@ class MainPage(BasePage):
     @allure.step("Проверить видимость сообщения об успешном заказе")
     def is_order_success_visible(self):
         """Проверяет видимость сообщения об успешном заказе (номер заказа или текст 'идентификатор заказа')"""
-        try:
-            from locators.order_feed_locators import OrderFeedPageLocators
-            # Проверяем наличие номера заказа (h2) или текста "идентификатор заказа"
-            return (self.is_element_visible(OrderFeedPageLocators.ORDER_NUMBER, timeout=Constants.TIMEOUT_DEFAULT) or
-                    self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT))
-        except Exception:
-            return False
+        from locators.order_feed_locators import OrderFeedPageLocators
+        # Линейный сценарий: проверяем наличие номера заказа (h2) или текста "идентификатор заказа"
+        return (self.is_element_visible(OrderFeedPageLocators.ORDER_NUMBER, timeout=Constants.TIMEOUT_DEFAULT) or
+                self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT))
     
     @allure.step("Получить текст модального окна заказа")
     def get_order_modal_text(self):
@@ -268,7 +243,7 @@ class MainPage(BasePage):
                             lambda d: any(char.isdigit() for char in d.find_element(*OrderFeedPageLocators.ORDER_NUMBER).text.strip())
                         )
                         return True
-                    except Exception:
+                    except (NoSuchElementException, TimeoutException, AttributeError):
                         # Если номер не появился, все равно возвращаем True, так как идентификатор найден
                         return True
             except (NoSuchElementException, TimeoutException):
@@ -296,7 +271,7 @@ class MainPage(BasePage):
             order_number = element.text.strip()
             if order_number and any(char.isdigit() for char in order_number):
                 return order_number
-        except Exception:
+        except (TimeoutException, NoSuchElementException, AttributeError):
             pass
         
         # Если не получилось, пытаемся найти номер заказа в тексте модального окна
@@ -309,7 +284,7 @@ class MainPage(BasePage):
                 numbers = re.findall(r'\d{4,}', modal_text)
                 if numbers:
                     return numbers[0]
-        except Exception:
+        except (AttributeError, ValueError):
             pass
         
         # Если ничего не нашли, возвращаем None

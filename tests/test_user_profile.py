@@ -19,28 +19,30 @@ class TestUserProfile:
         with allure.step("Кликаем по кнопке 'Личный кабинет'"):
             main_page.click_personal_account_button()
         
-        with allure.step("Проверяем, что открылась страница профиля"):
-            assert Urls.PROFILE_PAGE in driver.current_url, "Страница профиля не открылась"
+        assert Urls.PROFILE_PAGE in driver.current_url, "Страница профиля не открылась"
     
     @allure.title("Переход в раздел 'История заказов'")
     def test_go_to_order_history(self, driver, logged_in_user):
         """Проверяет переход в раздел 'История заказов'"""
         main_page = logged_in_user["main_page"]
-        main_page.click_personal_account_button()
+        
+        with allure.step("Переходим в личный кабинет"):
+            main_page.click_personal_account_button()
         
         profile_page = ProfilePage(driver)
         
         with allure.step("Кликаем по ссылке 'История заказов'"):
             profile_page.click_order_history_link()
         
-        with allure.step("Проверяем, что открылась страница истории заказов"):
-            assert Urls.ORDER_HISTORY_PAGE in driver.current_url, "Страница истории заказов не открылась"
+        assert Urls.ORDER_HISTORY_PAGE in driver.current_url, "Страница истории заказов не открылась"
     
     @allure.title("Выход из аккаунта")
     def test_logout(self, driver, logged_in_user):
         """Проверяет выход из аккаунта"""
         main_page = logged_in_user["main_page"]
-        main_page.click_personal_account_button()
+        
+        with allure.step("Переходим в личный кабинет"):
+            main_page.click_personal_account_button()
         
         profile_page = ProfilePage(driver)
         
@@ -49,14 +51,10 @@ class TestUserProfile:
         
         with allure.step("Ожидаем появления формы входа"):
             login_page = LoginPage(driver)
-            # Ждем появления формы входа через expected_conditions
             wait = WebDriverWait(driver, Constants.TIMEOUT_MEDIUM)
             wait.until(lambda d: login_page.is_login_title_visible())
         
-        with allure.step(f"Проверяем, что отображается страница входа с заголовком '{Constants.LOGIN_TITLE}'"):
-            assert login_page.is_login_title_visible(), f"Заголовок '{Constants.LOGIN_TITLE}' не найден на странице"
-        
-        with allure.step("Проверяем, что поля логин и пароль доступны"):
-            assert login_page.are_login_fields_available(), \
-                "Поля логин и пароль не доступны на странице входа"
+        assert login_page.is_login_title_visible(), f"Заголовок '{Constants.LOGIN_TITLE}' не найден на странице"
+        assert login_page.are_login_fields_available(), \
+            "Поля логин и пароль не доступны на странице входа"
 

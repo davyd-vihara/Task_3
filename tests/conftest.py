@@ -4,6 +4,13 @@ import uuid
 from utils.driver_factory import DriverFactory
 from utils.api_client import ApiClient
 from config.constants import Constants
+from config.urls import Urls
+from pages.login_page import LoginPage
+from pages.main_page import MainPage
+from pages.constructor_page import ConstructorPage
+from pages.order_feed_page import OrderFeedPage
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 # Глобальное хранилище для браузеров (для оптимизированного режима)
 _browser_instances = {}
@@ -53,33 +60,20 @@ if REUSE_BROWSER:
         browser_session.switch_to.window(new_window)
         
         # Очищаем состояние браузера для изоляции теста
-        try:
-            browser_session.delete_all_cookies()
-            browser_session.execute_script("localStorage.clear();")
-            browser_session.execute_script("sessionStorage.clear();")
-        except Exception:
-            pass
+        browser_session.delete_all_cookies()
+        browser_session.execute_script("localStorage.clear();")
+        browser_session.execute_script("sessionStorage.clear();")
         
         yield browser_session
         
         # После теста закрываем вкладку и возвращаемся к исходной
-        try:
-            browser_session.close()
-            browser_session.switch_to.window(original_window)
-        except Exception:
-            try:
-                if browser_session.window_handles:
-                    browser_session.switch_to.window(browser_session.window_handles[0])
-            except Exception:
-                pass
+        browser_session.close()
+        browser_session.switch_to.window(original_window)
     
     def pytest_sessionfinish(session, exitstatus):
         """Закрываем все браузеры в конце сессии"""
         for browser_name, driver in _browser_instances.items():
-            try:
-                driver.quit()
-            except Exception:
-                pass
+            driver.quit()
         _browser_instances.clear()
 
 else:
@@ -111,107 +105,45 @@ def registered_user(api_client):
     email = f"test_{uuid.uuid4()}@mail.ru"
     password = Constants.DEFAULT_PASSWORD
     name = "Test User"
-    access_token = None
 
-    try:
-        response = api_client.register_user(email, password, name)
-        access_token = response.get("accessToken")
-        
-        if not access_token:
-            raise Exception(f"Токен не получен при регистрации. Ответ: {response}")
+    response = api_client.register_user(email, password, name)
+    access_token = response.get("accessToken")
+    
+    if not access_token:
+        raise Exception(f"Токен не получен при регистрации. Ответ: {response}")
 
-        user_data = {
-            "email": email,
-            "password": password,
-            "name": name,
-            "access_token": access_token
-        }
-        
-        assert user_data["email"] == email, "Email не совпадает"
-        assert user_data["password"] == password, "Пароль не совпадает"
-        assert user_data["access_token"], "Access token отсутствует"
-        
-        yield user_data
-    except Exception as e:
-        try:
-            response = api_client.login_user(email, password)
-            access_token = response.get("accessToken")
-            if not access_token:
-                raise Exception(f"Токен не получен при входе. Ответ: {response}")
-            
-            user_data = {
-                "email": email,
-                "password": password,
-                "name": name,
-                "access_token": access_token
-            }
-            yield user_data
-        except Exception as login_error:
-            raise Exception(
-                f"Не удалось зарегистрировать или войти пользователя. "
-                f"Email: {email}, Ошибка регистрации: {str(e)}, "
-                f"Ошибка входа: {str(login_error)}"
-            )
-    finally:
-        if access_token:
-            try:
-                api_client.delete_user(access_token)
-            except Exception:
-                pass
+    user_data = {
+        "email": email,
+        "password": password,
+        "name": name,
+        "access_token": access_token
+    }
+    
+    yield user_data
+    
+    # Очистка: удаляем пользователя после теста
+    api_client.delete_user(access_token)
 
 
 @pytest.fixture(scope="function")
 def logged_in_user(driver, registered_user, api_client):
     """Фикстура для залогиненного пользователя"""
-    from pages.login_page import LoginPage
-    from pages.main_page import MainPage
-    
-    assert registered_user.get("email"), "Пользователь не зарегистрирован"
-    assert registered_user.get("password"), "Пароль пользователя отсутствует"
-    
     login_page = LoginPage(driver)
     login_page.open()
     login_page.login(registered_user["email"], registered_user["password"])
     
-    from config.urls import Urls
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
     wait = WebDriverWait(driver, Constants.TIMEOUT_LONG)
     
-    try:
-        wait.until(lambda d: "/login" not in d.current_url or Urls.BASE_URL.rstrip('/') in d.current_url)
-    except Exception:
-        pass
+    # Линейный сценарий: ждем выхода из страницы логина
+    wait.until(lambda d: "/login" not in d.current_url or Urls.BASE_URL.rstrip('/') in d.current_url)
     
     main_page = MainPage(driver)
     main_page.open()
     main_page.wait_for_page_load()
     
-    from selenium.webdriver.common.by import By
-    try:
-        wait.until(EC.presence_of_element_located(
-            (By.XPATH, "//a[contains(@class, 'BurgerIngredient_ingredient')]")
-        ))
-    except Exception:
-        pass
-    
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            wait.until(EC.presence_of_element_located(main_page.locators.ORDER_BUTTON))
-            try:
-                wait.until(EC.invisibility_of_element_located(main_page.locators.LOGIN_BUTTON))
-            except Exception:
-                pass
-            break
-        except Exception:
-            if attempt < max_retries - 1:
-                main_page.open()
-                # Ждем загрузки страницы через expected_conditions вместо sleep
-                main_page.wait_for_page_load()
-                wait.until(EC.presence_of_element_located(main_page.locators.ORDER_BUTTON))
-            else:
-                pass
+    # Линейный сценарий: ждем появления кнопки заказа
+    wait.until(EC.presence_of_element_located(main_page.locators.ORDER_BUTTON))
+    wait.until(EC.invisibility_of_element_located(main_page.locators.LOGIN_BUTTON))
     
     yield {
         "driver": driver,
@@ -224,7 +156,6 @@ def logged_in_user(driver, registered_user, api_client):
 @pytest.fixture(scope="function")
 def main_page(driver):
     """Фикстура для главной страницы"""
-    from config.urls import Urls
     page = MainPage(driver, Urls.BASE_URL)
     page.open()
     return page
@@ -242,7 +173,6 @@ def opened_main_page(driver):
 @pytest.fixture(scope="function")
 def constructor_page(driver, opened_main_page):
     """Фикстура для страницы конструктора"""
-    from pages.constructor_page import ConstructorPage
     opened_main_page.click_constructor_button()
     constructor_page = ConstructorPage(driver)
     return constructor_page
@@ -251,7 +181,6 @@ def constructor_page(driver, opened_main_page):
 @pytest.fixture(scope="function")
 def order_feed_page(driver, opened_main_page):
     """Фикстура для страницы ленты заказов"""
-    from pages.order_feed_page import OrderFeedPage
     opened_main_page.click_order_feed_button()
     order_feed_page = OrderFeedPage(driver)
     return order_feed_page
@@ -284,11 +213,8 @@ def pytest_runtest_makereport(item, call):
     if rep.when == "call" and rep.failed:
         driver = item.funcargs.get("driver")
         if driver:
-            try:
-                allure.attach(
-                    driver.get_screenshot_as_png(),
-                    name="screenshot",
-                    attachment_type=allure.attachment_type.PNG
-                )
-            except Exception:
-                pass
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="screenshot",
+                attachment_type=allure.attachment_type.PNG
+            )

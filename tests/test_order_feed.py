@@ -103,7 +103,7 @@ class TestOrderFeed:
             main_page.drag_ingredient_to_constructor(main_page.locators.FIRST_BUN_INGREDIENT)
             
             # Ждем обновления счетчика
-            main_page.wait_for_ingredient_counter_not_zero(main_page.locators.FIRST_BUN_INGREDIENT)
+            main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
             
             # Проверяем, что счетчик изменился
             new_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
@@ -156,7 +156,7 @@ class TestOrderFeed:
             main_page.drag_ingredient_to_constructor(main_page.locators.FIRST_BUN_INGREDIENT)
             
             # Ждем обновления счетчика
-            main_page.wait_for_ingredient_counter_not_zero(main_page.locators.FIRST_BUN_INGREDIENT)
+            main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
             
             # Проверяем, что счетчик изменился
             new_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)

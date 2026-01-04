@@ -1,0 +1,4 @@
+Данные пользователя из фикстуры:
+Email: test_ad3935af-92ab-4124-9bf6-725f4a0e606d@mail.ru
+Password: 123***
+Access Token: Bearer eyJhbGciOiJIU...

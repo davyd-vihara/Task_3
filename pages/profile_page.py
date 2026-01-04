@@ -2,6 +2,7 @@ from pages.base_page import BasePage
 from locators.profile_locators import ProfilePageLocators
 from config.urls import Urls
 from config.constants import Constants
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import allure
 
 class ProfilePage(BasePage):
@@ -28,7 +29,7 @@ class ProfilePage(BasePage):
         is_profile_url = "account/profile" in current_url or "account" in current_url
         try:
             has_profile_elements = self.is_element_visible(self.locators.PROFILE_PAGE_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD)
-        except:
+        except (TimeoutException, NoSuchElementException):
             has_profile_elements = False
         return is_profile_url or has_profile_elements
     

@@ -3,6 +3,7 @@ from locators.main_locators import MainPageLocators
 from config.urls import Urls
 from config.constants import Constants
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import allure
 
 class MainPage(BasePage):
@@ -17,7 +18,7 @@ class MainPage(BasePage):
         """Ожидает исчезновения overlay перед взаимодействием с элементами"""
         try:
             self.wait_for_element_to_disappear(self.locators.OVERLAY, timeout=Constants.TIMEOUT_DEFAULT)
-        except:
+        except (TimeoutException, NoSuchElementException):
             # Если overlay не найден или уже исчез, продолжаем
             pass
     
@@ -45,7 +46,8 @@ class MainPage(BasePage):
         # Ждем появления ингредиента вместо sleep
         try:
             ingredient = self.find_visible_element(self.locators.FIRST_BUN_INGREDIENT, timeout=Constants.TIMEOUT_DEFAULT)
-        except:
+        except (TimeoutException, NoSuchElementException):
+            # Если не нашли по основному локатору, пробуем альтернативный
             ingredient = self.find_visible_element((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"), timeout=Constants.TIMEOUT_MEDIUM)
         
         # Прокручиваем элемент в видимую область
@@ -56,7 +58,7 @@ class MainPage(BasePage):
         # Используем локатор ингредиента для проверки кликабельности
         try:
             wait.until(EC.element_to_be_clickable(self.locators.FIRST_BUN_INGREDIENT))
-        except:
+        except TimeoutException:
             # Если не нашли по основному локатору, пробуем альтернативный
             wait.until(EC.element_to_be_clickable((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]")))
         self.execute_script("arguments[0].click();", ingredient)
@@ -125,7 +127,7 @@ class MainPage(BasePage):
                     d.find_element(*self.locators.INGREDIENT_COUNTER_VALUE).text or 0
                 ) > 0
             )
-        except:
+        except (TimeoutException, NoSuchElementException, ValueError):
             pass  # Если счетчик не появился, продолжаем
     
     @allure.step("Получить счетчик ингредиента")
@@ -137,19 +139,19 @@ class MainPage(BasePage):
             try:
                 counter = ingredient.find_element(*self.locators.INGREDIENT_COUNTER)
                 return int(counter.text) if counter.text else 0
-            except:
+            except (NoSuchElementException, ValueError):
                 # Если не нашли внутри, ищем глобально
                 try:
                     counter = self.find_element(self.locators.INGREDIENT_COUNTER_VALUE, timeout=Constants.TIMEOUT_SHORT)
                     return int(counter.text) if counter.text else 0
-                except:
+                except (TimeoutException, NoSuchElementException, ValueError):
                     return 0
-        except:
+        except (TimeoutException, NoSuchElementException):
             # Если элемент ингредиента не найден, пробуем найти счетчик глобально
             try:
                 counter = self.find_element(self.locators.INGREDIENT_COUNTER_VALUE, timeout=Constants.TIMEOUT_SHORT)
                 return int(counter.text) if counter.text else 0
-            except:
+            except (TimeoutException, NoSuchElementException, ValueError):
                 return 0
     
     @allure.step("Проверить, что пользователь авторизован")
@@ -197,13 +199,13 @@ class MainPage(BasePage):
             # Используем локатор MODAL из main_locators, который указывает на контейнер модального окна
             modal = self.find_element(self.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
             return modal.text
-        except:
+        except (TimeoutException, NoSuchElementException):
             # Если не получилось, пробуем альтернативный способ
             try:
                 from locators.order_feed_locators import OrderFeedPageLocators
                 modal = self.find_element(OrderFeedPageLocators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
                 return modal.text
-            except:
+            except (TimeoutException, NoSuchElementException):
                 return ""
     
     @allure.step("Проверить наличие текста 'Ваш заказ начали готовить'")
@@ -212,7 +214,7 @@ class MainPage(BasePage):
         try:
             from locators.order_feed_locators import OrderFeedPageLocators
             return self.is_element_visible(OrderFeedPageLocators.ORDER_SUCCESS_TEXT)
-        except:
+        except (TimeoutException, NoSuchElementException, AttributeError):
             return False
     
     @allure.step("Проверить наличие текста 'Дождитесь готовности на орбитальной станции'")
@@ -221,7 +223,7 @@ class MainPage(BasePage):
         try:
             from locators.order_feed_locators import OrderFeedPageLocators
             return self.is_element_visible(OrderFeedPageLocators.ORDER_WAIT_TEXT)
-        except:
+        except (TimeoutException, NoSuchElementException, AttributeError):
             return False
     
     @allure.step("Ожидать появления и загрузки номера заказа в модальном окне")
@@ -250,7 +252,7 @@ class MainPage(BasePage):
                     # Проверяем, что номер заказа содержит цифры и не пустой
                     if order_text and any(char.isdigit() for char in order_text):
                         return True
-            except Exception:
+            except (NoSuchElementException, TimeoutException):
                 pass
             
             # Или проверяем наличие текста "идентификатор заказа"
@@ -269,7 +271,7 @@ class MainPage(BasePage):
                     except Exception:
                         # Если номер не появился, все равно возвращаем True, так как идентификатор найден
                         return True
-            except Exception:
+            except (NoSuchElementException, TimeoutException):
                 pass
             return False
         

@@ -4,6 +4,7 @@ from locators.base_locators import BaseLocators
 from config.urls import Urls
 from config.constants import Constants
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 import allure
 
 class OrderFeedPage(BasePage):
@@ -56,13 +57,13 @@ class OrderFeedPage(BasePage):
                     element = driver.find_element(by, locator)
                     if element and element.is_displayed():
                         return True
-                except:
+                except (NoSuchElementException, WebDriverException):
                     continue
             return False
         
         try:
             wait.until(modal_appeared)
-        except Exception:
+        except TimeoutException:
             # Если не удалось найти, пробуем еще раз с базовым локатором
             self.wait_for_element_to_be_visible(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
     
@@ -87,7 +88,7 @@ class OrderFeedPage(BasePage):
             # Убираем пробелы и преобразуем в число
             count = int(count_text.strip().replace(' ', ''))
             return count
-        except Exception as e:
+        except (TimeoutException, NoSuchElementException, ValueError, AttributeError) as e:
             # Если не получилось, пробуем альтернативный способ
             try:
                 # Используем JavaScript селектор напрямую
@@ -96,7 +97,7 @@ class OrderFeedPage(BasePage):
                 )
                 if count_text:
                     return int(count_text.strip().replace(' ', ''))
-            except:
+            except (ValueError, AttributeError):
                 pass
             return 0
     
@@ -105,7 +106,7 @@ class OrderFeedPage(BasePage):
         """Получает счетчик 'Выполнено за сегодня'"""
         try:
             return int(self.get_text(self.locators.TODAY_ORDERS_COUNTER))
-        except:
+        except (TimeoutException, NoSuchElementException, ValueError, AttributeError):
             return 0
     
     @allure.step("Получить список заказов в работе")
@@ -119,7 +120,7 @@ class OrderFeedPage(BasePage):
             # Получаем список заказов с коротким таймаутом
             orders = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
             return [order.text for order in orders if order.text]
-        except Exception as e:
+        except (TimeoutException, NoSuchElementException, WebDriverException) as e:
             # Пробуем альтернативный способ поиска
             try:
                 # Ищем все элементы li в разделе "В работе" с коротким таймаутом
@@ -127,7 +128,7 @@ class OrderFeedPage(BasePage):
                 section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT)
                 orders = section.find_elements(By.TAG_NAME, "li")
                 return [order.text for order in orders if order.text]
-            except Exception:
+            except (TimeoutException, NoSuchElementException, WebDriverException):
                 return []
     
     @allure.step("Проверить, есть ли заказ в разделе 'В работе'")
@@ -142,7 +143,7 @@ class OrderFeedPage(BasePage):
             section_text_normalized = re.sub(r'\D', '', section.text)
             if order_num_normalized in section_text_normalized:
                 return True
-        except Exception:
+        except (TimeoutException, NoSuchElementException, WebDriverException):
             pass
         
         # Пробуем найти через элементы списка
@@ -153,9 +154,9 @@ class OrderFeedPage(BasePage):
                     element_text_normalized = re.sub(r'\D', '', str(element.text))
                     if order_num_normalized in element_text_normalized or element_text_normalized in order_num_normalized:
                         return True
-                except Exception:
+                except (AttributeError, ValueError):
                     continue
-        except Exception:
+        except (TimeoutException, NoSuchElementException, WebDriverException):
             pass
         
         # Если не нашли, пробуем через get_in_progress_orders
@@ -165,7 +166,7 @@ class OrderFeedPage(BasePage):
                 order_text_normalized = re.sub(r'\D', '', str(order_text))
                 if order_num_normalized in order_text_normalized or order_text_normalized in order_num_normalized:
                     return True
-        except Exception:
+        except (TimeoutException, NoSuchElementException, WebDriverException):
             pass
         
         return False
@@ -193,7 +194,7 @@ class OrderFeedPage(BasePage):
             # Сначала пробуем через локатор
             if self.is_element_visible(self.locators.ORDER_COMPOSITION_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD):
                 return True
-        except:
+        except (TimeoutException, NoSuchElementException):
             pass
         
         # Если не нашли по локатору, пробуем найти по тексту напрямую в модальном окне
@@ -202,14 +203,14 @@ class OrderFeedPage(BasePage):
             modal = self.find_element(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_MODAL_LOAD)
             composition = modal.find_element(By.XPATH, ".//p[contains(text(), 'Состав')]")
             return composition and composition.is_displayed()
-        except:
+        except (TimeoutException, NoSuchElementException):
             pass
         
         # Пробуем глобальный поиск
         try:
             composition = self.find_element_direct(By.XPATH, "//p[contains(text(), 'Состав')]")
             return composition and composition.is_displayed()
-        except:
+        except (NoSuchElementException, WebDriverException):
             return False
 
 

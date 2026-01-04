@@ -3,6 +3,7 @@ from locators.password_recovery_locators import PasswordRecoveryPageLocators
 from config.urls import Urls
 from config.constants import Constants
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import allure
 
 class PasswordRecoveryPage(BasePage):
@@ -42,12 +43,12 @@ class PasswordRecoveryPage(BasePage):
         # Ищем label с текстом "Введите код"
         try:
             return self.is_element_visible(self.locators.CODE_INPUT, timeout=Constants.TIMEOUT_DEFAULT)
-        except:
+        except (TimeoutException, NoSuchElementException):
             # Альтернативный поиск - ищем по тексту
             try:
                 code_label = self.find_element_direct(By.XPATH, "//label[contains(text(), 'Введите код')]")
                 return code_label.is_displayed()
-            except:
+            except (NoSuchElementException, AttributeError):
                 return False
     
     @allure.step("Проверить подсветку поля пароля")
@@ -58,7 +59,7 @@ class PasswordRecoveryPage(BasePage):
             # Проверяем наличие класса или стиля, указывающего на активное состояние
             classes = password_field.get_attribute("class")
             return "input_status_active" in classes or "input__status_active" in classes
-        except:
+        except (TimeoutException, NoSuchElementException, AttributeError):
             return False
     
     @allure.step("Получить тип поля пароля")

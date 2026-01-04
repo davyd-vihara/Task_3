@@ -20,14 +20,14 @@ class BasePage:
     @allure.step("Найти элемент")
     def find_element(self, locator, timeout=10):
         """Находит элемент с ожиданием"""
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         return wait.until(EC.presence_of_element_located(locator))
     
     @allure.step("Найти все элементы")
     def find_elements(self, locator, timeout=10):
         """Находит все элементы с ожиданием"""
         try:
-            wait = WebDriverWait(self.driver, timeout)
+            wait = self.get_wait(timeout)
             return wait.until(EC.presence_of_all_elements_located(locator))
         except (TimeoutException, WebDriverException):
             return []
@@ -37,7 +37,7 @@ class BasePage:
     @allure.step("Найти видимый элемент")
     def find_visible_element(self, locator, timeout=10):
         """Находит видимый элемент"""
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         return wait.until(EC.visibility_of_element_located(locator))
     
     @allure.step("Кликнуть по элементу")
@@ -48,13 +48,13 @@ class BasePage:
             element.click()
         except Exception:
             # Если обычный клик не работает (например, элемент перекрыт overlay), используем JavaScript
-            self.driver.execute_script("arguments[0].click();", element)
+            self.execute_script("arguments[0].click();", element)
     
     @allure.step("Кликнуть по элементу через JavaScript")
     def click_by_js(self, locator):
         """Кликает по элементу через JavaScript (обходит проблемы с перекрытием элементов)"""
         element = self.find_visible_element(locator)
-        self.driver.execute_script("arguments[0].click();", element)
+        self.execute_script("arguments[0].click();", element)
     
     @allure.step("Перетащить элемент")
     def drag_and_drop_element(self, source, target):
@@ -79,7 +79,7 @@ class BasePage:
     def is_element_visible(self, locator, timeout=5):
         """Проверяет видимость элемента"""
         try:
-            wait = WebDriverWait(self.driver, timeout)
+            wait = self.get_wait(timeout)
             element = wait.until(EC.visibility_of_element_located(locator))
             return element.is_displayed()
         except (TimeoutException, WebDriverException):
@@ -90,7 +90,7 @@ class BasePage:
     @allure.step("Ожидать исчезновения элемента")
     def wait_for_element_to_disappear(self, locator, timeout=10):
         """Ожидает исчезновения элемента"""
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         return wait.until(EC.invisibility_of_element_located(locator))
     
     @allure.step("Ожидать появления видимого элемента")
@@ -106,12 +106,27 @@ class BasePage:
     @allure.step("Проверить, что URL содержит часть")
     def wait_for_url_contains(self, url_part, timeout=10):
         """Ожидает, что URL содержит указанную часть"""
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         return wait.until(lambda d: url_part in d.current_url)
     
     @allure.step("Проверить, что URL не содержит часть")
     def wait_for_url_not_contains(self, url_part, timeout=10):
         """Ожидает, что URL не содержит указанную часть"""
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         return wait.until(lambda d: url_part not in d.current_url)
+    
+    @allure.step("Получить WebDriverWait")
+    def get_wait(self, timeout=10):
+        """Возвращает объект WebDriverWait с указанным таймаутом"""
+        return WebDriverWait(self.driver, timeout)
+    
+    @allure.step("Выполнить JavaScript")
+    def execute_script(self, script, *args):
+        """Выполняет JavaScript код"""
+        return self.driver.execute_script(script, *args)
+    
+    @allure.step("Найти элемент напрямую (без ожидания)")
+    def find_element_direct(self, by, value):
+        """Находит элемент напрямую без ожидания (для поиска внутри других элементов)"""
+        return self.driver.find_element(by, value)
 

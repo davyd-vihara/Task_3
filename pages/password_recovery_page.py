@@ -44,7 +44,7 @@ class PasswordRecoveryPage(BasePage):
         except:
             # Альтернативный поиск - ищем по тексту
             try:
-                code_label = self.driver.find_element(By.XPATH, "//label[contains(text(), 'Введите код')]")
+                code_label = self.find_element_direct(By.XPATH, "//label[contains(text(), 'Введите код')]")
                 return code_label.is_displayed()
             except:
                 return False

@@ -49,9 +49,9 @@ class MainPage(BasePage):
         except:
             ingredient = self.find_visible_element((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"), timeout=10)
         
-        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", ingredient)
+        self.execute_script("arguments[0].scrollIntoView({block: 'center'});", ingredient)
         time.sleep(0.5)
-        self.driver.execute_script("arguments[0].click();", ingredient)
+        self.execute_script("arguments[0].click();", ingredient)
     
     @allure.step("Кликнуть по первому ингредиенту из соусов")
     def click_first_sauce_ingredient(self):
@@ -109,9 +109,8 @@ class MainPage(BasePage):
     @allure.step("Ожидать появления счетчика ингредиента")
     def wait_for_ingredient_counter_not_zero(self, timeout=10):
         """Ожидает, пока счетчик ингредиента станет больше 0"""
-        from selenium.webdriver.support.ui import WebDriverWait
         try:
-            WebDriverWait(self.driver, timeout).until(
+            self.get_wait(timeout).until(
                 lambda d: int(
                     d.find_element(*self.locators.INGREDIENT_COUNTER_VALUE).text or 0
                 ) > 0
@@ -219,16 +218,16 @@ class MainPage(BasePage):
     def wait_for_order_number(self, timeout=30):
         """Ожидает появления номера заказа в модальном окне и его обновления"""
         from locators.order_feed_locators import OrderFeedPageLocators
-        from selenium.webdriver.support.ui import WebDriverWait
         from selenium.common.exceptions import TimeoutException
         
         # Сначала ждем появления модального окна
         self.wait_for_element_to_be_visible(self.locators.MODAL, timeout=timeout)
         
         # Ждем появления номера заказа (h2) или текста "идентификатор заказа"
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         
         # Ждем, пока появится номер заказа (h2) с цифрами
+        # В lambda функции используем driver напрямую, так как это стандартный паттерн для WebDriverWait
         def order_number_loaded(driver):
             try:
                 # Проверяем наличие номера заказа (h2)

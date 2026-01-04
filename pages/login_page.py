@@ -3,8 +3,6 @@ from locators.login_locators import LoginPageLocators
 from config.urls import Urls
 import allure
 import time
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 class LoginPage(BasePage):
     """Страница входа"""
@@ -52,7 +50,7 @@ class LoginPage(BasePage):
         self.click_login_button()
         
         # Ждем перехода на главную страницу после успешного входа
-        wait = WebDriverWait(self.driver, 15)
+        wait = self.get_wait(15)
         
         # Ждем, пока URL изменится (уйдет со страницы логина)
         try:

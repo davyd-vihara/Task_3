@@ -32,14 +32,13 @@ class OrderFeedPage(BasePage):
     def wait_for_order_modal(self, timeout=15):
         """Ожидает появления модального окна заказа"""
         import time
-        from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         
         # Небольшая задержка для начала анимации
         time.sleep(0.5)
         
         # Пробуем найти модальное окно разными способами
-        wait = WebDriverWait(self.driver, timeout)
+        wait = self.get_wait(timeout)
         
         def modal_appeared(driver):
             # Пробуем разные варианты локаторов
@@ -90,7 +89,7 @@ class OrderFeedPage(BasePage):
             # Если не получилось, пробуем альтернативный способ
             try:
                 # Используем JavaScript селектор напрямую
-                count_text = self.driver.execute_script(
+                count_text = self.execute_script(
                     "return document.querySelector('#root > div > main > div > div > div > div.undefined.mb-15 > p.OrderFeed_number__2MbrQ.text.text_type_digits-large')?.textContent || '';"
                 )
                 if count_text:
@@ -206,7 +205,7 @@ class OrderFeedPage(BasePage):
         
         # Пробуем глобальный поиск
         try:
-            composition = self.driver.find_element(By.XPATH, "//p[contains(text(), 'Состав')]")
+            composition = self.find_element_direct(By.XPATH, "//p[contains(text(), 'Состав')]")
             return composition and composition.is_displayed()
         except:
             return False

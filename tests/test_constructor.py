@@ -4,7 +4,6 @@ from pages.order_feed_page import OrderFeedPage
 from pages.main_page import MainPage
 from pages.login_page import LoginPage
 from config.constants import Constants
-from config.urls import Urls
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By

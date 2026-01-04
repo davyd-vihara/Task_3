@@ -70,8 +70,8 @@ class TestConstructor:
             main_page.click_first_bun_ingredient()
         
         with allure.step("Ждем открытия модального окна и проверяем, что окно открыто"):
-            import time
-            time.sleep(1)  # Даем время на открытие модального окна
+            # Ждем появления модального окна через expected_conditions
+            main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
             assert main_page.is_modal_visible(), "Модальное окно с деталями ингредиента не появилось"
         
         with allure.step("Проверяем наличие заголовка 'Детали ингредиента'"):
@@ -106,8 +106,8 @@ class TestConstructor:
             main_page.click_first_bun_ingredient()
         
         with allure.step("Ждем открытия модального окна и проверяем, что окно открыто"):
-            import time
-            time.sleep(Constants.TIMEOUT)
+            # Ждем появления модального окна через expected_conditions
+            main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
             assert main_page.is_modal_visible(), "Модальное окно с деталями ингредиента не появилось"
         
         with allure.step(f"Проверяем наличие заголовка '{Constants.INGREDIENT_DETAILS_TITLE}'"):
@@ -155,7 +155,7 @@ class TestConstructor:
         
         with allure.step("Ожидаем появления счетчика"):
             # Ждем, пока счетчик появится и станет больше 0
-            main_page.wait_for_ingredient_counter_not_zero(timeout=10)
+            main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что значение в счетчике первого элемента (булки) строго больше нуля"):
             new_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
@@ -217,7 +217,7 @@ class TestConstructor:
             from selenium.webdriver.support import expected_conditions as EC
             from selenium.webdriver.common.by import By
             from config.urls import Urls
-            wait = WebDriverWait(driver, 15)
+            wait = WebDriverWait(driver, Constants.TIMEOUT_LONG)
             
             # Ждем перехода на главную страницу
             wait.until(lambda d: "/login" not in d.current_url)
@@ -226,9 +226,11 @@ class TestConstructor:
             main_page.open()
             main_page.wait_for_page_load()
             
-            # Даем время на сохранение токена в cookies/localStorage и обновление UI
-            import time
-            time.sleep(Constants.TIMEOUT)
+            # Ждем авторизации через expected_conditions (появление кнопки "Оформить заказ")
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            wait = WebDriverWait(driver, Constants.TIMEOUT_MEDIUM)
+            wait.until(lambda d: main_page.is_user_logged_in())
             
             # Проверяем авторизацию
             assert main_page.is_user_logged_in(), \
@@ -249,7 +251,7 @@ class TestConstructor:
             initial_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
             main_page.drag_ingredient_to_constructor(main_page.locators.FIRST_BUN_INGREDIENT)
             # Ждем обновления счетчика
-            main_page.wait_for_ingredient_counter_not_zero(timeout=10)
+            main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
             new_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
             assert new_counter > initial_counter, \
                 f"Счетчик не изменился. Было: {initial_counter}, стало: {new_counter}"

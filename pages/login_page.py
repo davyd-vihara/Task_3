@@ -1,8 +1,9 @@
 from pages.base_page import BasePage
 from locators.login_locators import LoginPageLocators
 from config.urls import Urls
+from config.constants import Constants
 import allure
-import time
+from selenium.webdriver.support import expected_conditions as EC
 
 class LoginPage(BasePage):
     """Страница входа"""
@@ -50,24 +51,32 @@ class LoginPage(BasePage):
         self.click_login_button()
         
         # Ждем перехода на главную страницу после успешного входа
-        wait = self.get_wait(15)
+        wait = self.get_wait(Constants.TIMEOUT_LONG)
         
         # Ждем, пока URL изменится (уйдет со страницы логина)
+        # Используем expected_conditions для проверки изменения URL
         try:
-            wait.until(lambda d: "/login" not in d.current_url)
+            # Проверяем, что URL изменился (не равен исходному) через явное ожидание
+            wait.until(lambda d: d.current_url != url_before)
         except Exception:
-            # Если не перешли, проверяем, что хотя бы URL изменился
-            time.sleep(2)
-            url_after = self.get_current_url()
-            if url_before == url_after:
-                raise Exception(
-                    f"Авторизация не прошла. URL не изменился. "
-                    f"Было: {url_before}, Стало: {url_after}. "
-                    f"Возможно, неверные данные: email={email}"
-                )
+            # Если не перешли, проверяем, что хотя бы URL не содержит "/login"
+            try:
+                wait.until(EC.not_(EC.url_contains("/login")))
+            except Exception:
+                url_after = self.get_current_url()
+                if url_before == url_after:
+                    raise Exception(
+                        f"Авторизация не прошла. URL не изменился. "
+                        f"Было: {url_before}, Стало: {url_after}. "
+                        f"Возможно, неверные данные: email={email}"
+                    )
         
-        # Даем время на сохранение токена в cookies/localStorage
-        time.sleep(2)
+        # Ждем сохранения токена в cookies/localStorage через проверку наличия токена
+        try:
+            wait.until(lambda d: self.execute_script("return localStorage.getItem('accessToken') || document.cookie.includes('token')"))
+        except Exception:
+            # Если токен не найден, это не критично - продолжаем
+            pass
     
     @allure.step("Проверить видимость формы входа")
     def is_login_form_visible(self):
@@ -77,13 +86,13 @@ class LoginPage(BasePage):
     @allure.step("Проверить наличие заголовка 'Вход'")
     def is_login_title_visible(self):
         """Проверяет наличие заголовка 'Вход'"""
-        return self.is_element_visible(self.locators.LOGIN_TITLE, timeout=5)
+        return self.is_element_visible(self.locators.LOGIN_TITLE, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Проверить доступность полей входа")
     def are_login_fields_available(self):
         """Проверяет доступность полей email и пароля"""
-        email_visible = self.is_element_visible(self.locators.EMAIL_INPUT, timeout=5)
-        password_visible = self.is_element_visible(self.locators.PASSWORD_INPUT, timeout=5)
+        email_visible = self.is_element_visible(self.locators.EMAIL_INPUT, timeout=Constants.TIMEOUT_DEFAULT)
+        password_visible = self.is_element_visible(self.locators.PASSWORD_INPUT, timeout=Constants.TIMEOUT_DEFAULT)
         return email_visible and password_visible
 
 

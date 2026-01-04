@@ -1,9 +1,10 @@
 import allure
-import time
 from pages.login_page import LoginPage
 from pages.password_recovery_page import PasswordRecoveryPage
 from config.urls import Urls
 from config.constants import Constants
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Восстановление пароля")
 @allure.story("Функциональность восстановления пароля")
@@ -37,11 +38,8 @@ class TestPasswordRecovery:
             recovery_page.click_recover_button()
         
         with allure.step("Ожидаем перехода на страницу ввода кода"):
-            # Ждем перехода на страницу reset-password
-            time.sleep(Constants.TIMEOUT)
-            
-            # Проверяем, что произошел переход на страницу ввода кода
-            recovery_page.wait_for_url_contains("/reset-password", timeout=10)
+            # Ждем перехода на страницу reset-password через expected_conditions
+            recovery_page.wait_for_url_contains("/reset-password", timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем переход на страницу ввода кода"):
             # После клика должна открыться страница reset-password
@@ -58,9 +56,8 @@ class TestPasswordRecovery:
         recovery_page.input_email(test_email)
         recovery_page.click_recover_button()
         
-        # Ждем перехода на страницу ввода кода
-        time.sleep(Constants.TIMEOUT)
-        recovery_page.wait_for_url_contains("/reset-password", timeout=10)
+        # Ждем перехода на страницу ввода кода через expected_conditions
+        recovery_page.wait_for_url_contains("/reset-password", timeout=Constants.TIMEOUT_MEDIUM)
         
         # Ждем появления поля пароля (может потребоваться ввод кода)
         # Для теста предположим, что поле пароля уже доступно

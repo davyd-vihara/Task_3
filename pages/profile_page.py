@@ -1,6 +1,7 @@
 from pages.base_page import BasePage
 from locators.profile_locators import ProfilePageLocators
 from config.urls import Urls
+from config.constants import Constants
 import allure
 
 class ProfilePage(BasePage):
@@ -26,7 +27,7 @@ class ProfilePage(BasePage):
         current_url = self.get_current_url()
         is_profile_url = "account/profile" in current_url or "account" in current_url
         try:
-            has_profile_elements = self.is_element_visible(self.locators.PROFILE_PAGE_TITLE, timeout=3)
+            has_profile_elements = self.is_element_visible(self.locators.PROFILE_PAGE_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD)
         except:
             has_profile_elements = False
         return is_profile_url or has_profile_elements
@@ -40,10 +41,10 @@ class ProfilePage(BasePage):
     @allure.step("Проверить наличие кнопки 'Профиль'")
     def is_profile_button_visible(self):
         """Проверяет наличие кнопки 'Профиль' в меню личного кабинета"""
-        return self.is_element_visible(self.locators.PROFILE_BUTTON, timeout=5)
+        return self.is_element_visible(self.locators.PROFILE_BUTTON, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Проверить наличие кнопки 'Выход'")
     def is_logout_button_visible(self):
         """Проверяет наличие кнопки 'Выход' в меню личного кабинета"""
-        return self.is_element_visible(self.locators.LOGOUT_BUTTON, timeout=5)
+        return self.is_element_visible(self.locators.LOGOUT_BUTTON, timeout=Constants.TIMEOUT_DEFAULT)
 

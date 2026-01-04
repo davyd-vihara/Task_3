@@ -1,6 +1,7 @@
 from pages.base_page import BasePage
 from locators.password_recovery_locators import PasswordRecoveryPageLocators
 from config.urls import Urls
+from config.constants import Constants
 from selenium.webdriver.common.by import By
 import allure
 
@@ -40,7 +41,7 @@ class PasswordRecoveryPage(BasePage):
         
         # Ищем label с текстом "Введите код"
         try:
-            return self.is_element_visible(self.locators.CODE_INPUT, timeout=5)
+            return self.is_element_visible(self.locators.CODE_INPUT, timeout=Constants.TIMEOUT_DEFAULT)
         except:
             # Альтернативный поиск - ищем по тексту
             try:

@@ -1,9 +1,10 @@
 import allure
-import time
 from pages.profile_page import ProfilePage
 from pages.login_page import LoginPage
 from config.urls import Urls
 from config.constants import Constants
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 @allure.feature("Личный кабинет")
@@ -47,8 +48,10 @@ class TestUserProfile:
             profile_page.click_logout_button()
         
         with allure.step("Ожидаем появления формы входа"):
-            time.sleep(Constants.TIMEOUT)
             login_page = LoginPage(driver)
+            # Ждем появления формы входа через expected_conditions
+            wait = WebDriverWait(driver, Constants.TIMEOUT_MEDIUM)
+            wait.until(lambda d: login_page.is_login_title_visible())
         
         with allure.step(f"Проверяем, что отображается страница входа с заголовком '{Constants.LOGIN_TITLE}'"):
             assert login_page.is_login_title_visible(), f"Заголовок '{Constants.LOGIN_TITLE}' не найден на странице"

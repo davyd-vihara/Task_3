@@ -1,9 +1,10 @@
 import allure
 import pytest
-import time
 from pages.main_page import MainPage
 from pages.order_feed_page import OrderFeedPage
 from config.constants import Constants
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Лента заказов")
 @allure.story("Функциональность ленты заказов")
@@ -27,7 +28,7 @@ class TestOrderFeed:
             order_feed_page.click_first_order()
         
         with allure.step("Ожидаем появления модального окна"):
-            order_feed_page.wait_for_order_modal(timeout=10)
+            order_feed_page.wait_for_order_modal(timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что открылось всплывающее окно с деталями заказа"):
             assert order_feed_page.is_order_modal_visible(), "Модальное окно с деталями заказа не открылось"
@@ -109,8 +110,8 @@ class TestOrderFeed:
         
         with allure.step("Оформляем заказ"):
             main_page.click_order_button()
-            time.sleep(Constants.TIMEOUT)
-            
+            # Ждем появления модального окна через expected_conditions
+            main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_MEDIUM)
             # Проверяем, что модальное окно заказа появилось
             assert main_page.is_modal_visible(), "Модальное окно заказа не появилось"
         
@@ -118,8 +119,8 @@ class TestOrderFeed:
             main_page.close_modal()
             main_page.click_order_feed_button()
             order_feed_page = OrderFeedPage(driver)
-            # Ждем загрузки страницы и обновления счетчика
-            time.sleep(Constants.TIMEOUT)
+            # Ждем загрузки страницы и появления заголовка через expected_conditions
+            order_feed_page.wait_for_element_to_be_visible(order_feed_page.locators.ORDER_FEED_TITLE, timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что счетчик строго больше начального значения"):
             new_total = order_feed_page.get_total_orders_count()
@@ -162,22 +163,78 @@ class TestOrderFeed:
         
         with allure.step("Оформляем заказ"):
             main_page.click_order_button()
-            time.sleep(Constants.TIMEOUT)
-            
+            # Ждем появления модального окна через expected_conditions
+            main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_MEDIUM)
             # Проверяем, что модальное окно заказа появилось
             assert main_page.is_modal_visible(), "Модальное окно заказа не появилось"
         
         with allure.step("Закрываем модальное окно и переходим в ленту заказов"):
             main_page.close_modal()
+            # Ждем закрытия модального окна перед переходом
+            main_page.wait_for_element_to_disappear(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
+            
+            # Даем время серверу обработать заказ перед переходом в ленту заказов
+            # Используем явное ожидание через WebDriverWait вместо sleep
+            wait_before_feed = WebDriverWait(driver, Constants.TIMEOUT_MODAL_LOAD)
+            try:
+                # Ждем, пока модальное окно полностью закроется
+                wait_before_feed.until(EC.invisibility_of_element_located(main_page.locators.MODAL))
+            except Exception:
+                pass  # Если модальное окно уже закрыто, продолжаем
+            
             main_page.click_order_feed_button()
             order_feed_page = OrderFeedPage(driver)
-            # Ждем загрузки страницы и обновления счетчика
-            time.sleep(Constants.TIMEOUT)
+            # Ждем загрузки страницы и появления заголовка через expected_conditions
+            order_feed_page.wait_for_element_to_be_visible(order_feed_page.locators.ORDER_FEED_TITLE, timeout=Constants.TIMEOUT_MEDIUM)
+        
+        with allure.step("Ожидаем обновления счетчика 'Выполнено за сегодня'"):
+            # Ждем, пока счетчик увеличится (может потребоваться время на обработку заказа на сервере)
+            # Используем явное ожидание через WebDriverWait с проверкой изменения счетчика
+            wait = WebDriverWait(driver, Constants.TIMEOUT_VERY_LONG)
+            
+            try:
+                # Ждем, пока счетчик увеличится (явное ожидание через expected_conditions)
+                wait.until(lambda d: order_feed_page.get_today_orders_count() > initial_today)
+                new_today = order_feed_page.get_today_orders_count()
+            except Exception:
+                # Если явное ожидание не сработало, используем несколько попыток с обновлением страницы
+                max_attempts = 25  # Увеличено количество попыток
+                new_today = initial_today
+                
+                for attempt in range(max_attempts):
+                    try:
+                        # Обновляем страницу для получения актуальных данных счетчика
+                        if attempt > 0:
+                            driver.refresh()
+                            order_feed_page.wait_for_element_to_be_visible(
+                                order_feed_page.locators.ORDER_FEED_TITLE, 
+                                timeout=Constants.TIMEOUT_DEFAULT
+                            )
+                        
+                        # Получаем текущее значение счетчика
+                        current_count = order_feed_page.get_today_orders_count()
+                        
+                        if current_count > initial_today:
+                            new_today = current_count
+                            break
+                    except Exception as e:
+                        if attempt == max_attempts - 1:
+                            print(f"Ошибка при проверке счетчика (попытка {attempt + 1}): {str(e)}")
+                    
+                    # Ждем перед следующей попыткой (увеличено время ожидания)
+                    if attempt < max_attempts - 1:
+                        try:
+                            # Используем более длительное ожидание для задержки между попытками
+                            wait_attempt = WebDriverWait(driver, Constants.TIMEOUT_MODAL_LOAD)
+                            wait_attempt.until(EC.presence_of_element_located(order_feed_page.locators.TODAY_ORDERS_COUNTER))
+                        except Exception:
+                            # Если элемент не найден, просто продолжаем
+                            pass
         
         with allure.step("Проверяем, что счетчик строго больше начального значения"):
-            new_today = order_feed_page.get_today_orders_count()
             assert new_today > initial_today, \
-                f"Счетчик 'Выполнено за сегодня' не увеличился. Было: {initial_today}, стало: {new_today}"
+                f"Счетчик 'Выполнено за сегодня' не увеличился. Было: {initial_today}, стало: {new_today}. " \
+                f"Возможно, заказ еще обрабатывается на сервере или счетчик обновляется с задержкой."
     
     @allure.title("Номер заказа появляется в разделе 'В работе'")
     @pytest.mark.timeout(180)
@@ -187,11 +244,13 @@ class TestOrderFeed:
         
         with allure.step("Добавляем ингредиенты в конструктор"):
             main_page.drag_ingredient_to_constructor(main_page.locators.FIRST_BUN_INGREDIENT)
-            time.sleep(Constants.TIMEOUT)
+            # Ждем обновления счетчика через expected_conditions
+            main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Оформляем заказ"):
             main_page.click_order_button()
-            time.sleep(Constants.TIMEOUT)
+            # Ждем появления модального окна через expected_conditions
+            main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Получаем номер заказа из модального окна"):
             assert main_page.is_modal_visible(), "Модальное окно заказа должно быть видно"
@@ -200,28 +259,28 @@ class TestOrderFeed:
         
         with allure.step("Закрываем модальное окно"):
             main_page.close_modal()
-            time.sleep(Constants.TIMEOUT)
+            # Ждем закрытия модального окна через expected_conditions
+            main_page.wait_for_element_to_disappear(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
         
         with allure.step("Переходим в ленту заказов"):
             main_page.click_order_feed_button()
             order_feed_page = OrderFeedPage(driver)
+            # Ждем загрузки страницы через expected_conditions
+            order_feed_page.wait_for_element_to_be_visible(order_feed_page.locators.ORDER_FEED_TITLE, timeout=Constants.TIMEOUT_MEDIUM)
             assert order_feed_page.is_order_feed_title_visible(), "Страница ленты заказов не загрузилась"
-            time.sleep(Constants.TIMEOUT)
         
         with allure.step("Ожидаем обновления раздела 'В работе'"):
             import re
             order_num = re.sub(r'\D', '', str(order_number))
             
             max_attempts = 8
-            max_wait_time = Constants.TIMEOUT
             found = False
-            time.sleep(Constants.TIMEOUT)
             
             for attempt in range(max_attempts):
                 try:
                     section_visible = order_feed_page.is_element_visible(
                         order_feed_page.locators.IN_PROGRESS_SECTION, 
-                        timeout=2
+                        timeout=Constants.TIMEOUT_SHORT
                     )
                     if section_visible and order_feed_page.is_order_in_progress(order_num):
                         found = True
@@ -229,8 +288,15 @@ class TestOrderFeed:
                 except Exception as e:
                     print(f"Ошибка при проверке раздела 'В работе' (попытка {attempt + 1}): {str(e)}")
                 
-                wait_time = min(Constants.TIMEOUT + (attempt * 0.5), max_wait_time)
-                time.sleep(wait_time)
+                # Используем ожидание через expected_conditions вместо sleep
+                if attempt < max_attempts - 1:
+                    wait = WebDriverWait(driver, Constants.TIMEOUT_SHORT)
+                    try:
+                        wait.until(lambda d: order_feed_page.is_order_in_progress(order_num))
+                        found = True
+                        break
+                    except Exception:
+                        pass
         
         with allure.step("Проверяем, что номер заказа появился в разделе 'В работе'"):
             assert found, \

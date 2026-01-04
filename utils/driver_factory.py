@@ -165,6 +165,6 @@ class DriverFactory:
             raise ValueError(f"Неподдерживаемый браузер: {browser_name}. "
                            f"Поддерживаются: chrome, firefox")
         
-        driver.implicitly_wait(10)
+        # Не используем неявные ожидания - только явные через WebDriverWait и expected_conditions
         return driver
 

@@ -1,6 +1,7 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
+from config.constants import Constants
 import allure
 
 class BasePage:
@@ -9,7 +10,7 @@ class BasePage:
     def __init__(self, driver, url=None):
         self.driver = driver
         self.url = url
-        self.wait = WebDriverWait(driver, 10)
+        self.wait = WebDriverWait(driver, Constants.TIMEOUT_MEDIUM)
     
     @allure.step("Открыть страницу")
     def open(self):
@@ -18,14 +19,18 @@ class BasePage:
             self.driver.get(self.url)
     
     @allure.step("Найти элемент")
-    def find_element(self, locator, timeout=10):
+    def find_element(self, locator, timeout=None):
         """Находит элемент с ожиданием"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         wait = self.get_wait(timeout)
         return wait.until(EC.presence_of_element_located(locator))
     
     @allure.step("Найти все элементы")
-    def find_elements(self, locator, timeout=10):
+    def find_elements(self, locator, timeout=None):
         """Находит все элементы с ожиданием"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         try:
             wait = self.get_wait(timeout)
             return wait.until(EC.presence_of_all_elements_located(locator))
@@ -35,8 +40,10 @@ class BasePage:
             return []
     
     @allure.step("Найти видимый элемент")
-    def find_visible_element(self, locator, timeout=10):
+    def find_visible_element(self, locator, timeout=None):
         """Находит видимый элемент"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         wait = self.get_wait(timeout)
         return wait.until(EC.visibility_of_element_located(locator))
     
@@ -76,8 +83,10 @@ class BasePage:
         return element.text
     
     @allure.step("Проверить видимость элемента")
-    def is_element_visible(self, locator, timeout=5):
+    def is_element_visible(self, locator, timeout=None):
         """Проверяет видимость элемента"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_DEFAULT
         try:
             wait = self.get_wait(timeout)
             element = wait.until(EC.visibility_of_element_located(locator))
@@ -88,13 +97,15 @@ class BasePage:
             return False
     
     @allure.step("Ожидать исчезновения элемента")
-    def wait_for_element_to_disappear(self, locator, timeout=10):
+    def wait_for_element_to_disappear(self, locator, timeout=None):
         """Ожидает исчезновения элемента"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         wait = self.get_wait(timeout)
         return wait.until(EC.invisibility_of_element_located(locator))
     
     @allure.step("Ожидать появления видимого элемента")
-    def wait_for_element_to_be_visible(self, locator, timeout=10):
+    def wait_for_element_to_be_visible(self, locator, timeout=None):
         """Ожидает появления видимого элемента"""
         return self.find_visible_element(locator, timeout=timeout)
     
@@ -104,20 +115,26 @@ class BasePage:
         return self.driver.current_url
     
     @allure.step("Проверить, что URL содержит часть")
-    def wait_for_url_contains(self, url_part, timeout=10):
+    def wait_for_url_contains(self, url_part, timeout=None):
         """Ожидает, что URL содержит указанную часть"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         wait = self.get_wait(timeout)
         return wait.until(lambda d: url_part in d.current_url)
     
     @allure.step("Проверить, что URL не содержит часть")
-    def wait_for_url_not_contains(self, url_part, timeout=10):
+    def wait_for_url_not_contains(self, url_part, timeout=None):
         """Ожидает, что URL не содержит указанную часть"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         wait = self.get_wait(timeout)
         return wait.until(lambda d: url_part not in d.current_url)
     
     @allure.step("Получить WebDriverWait")
-    def get_wait(self, timeout=10):
+    def get_wait(self, timeout=None):
         """Возвращает объект WebDriverWait с указанным таймаутом"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         return WebDriverWait(self.driver, timeout)
     
     @allure.step("Выполнить JavaScript")

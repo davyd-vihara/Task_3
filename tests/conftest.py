@@ -163,7 +163,6 @@ def registered_user(api_client):
 @pytest.fixture(scope="function")
 def logged_in_user(driver, registered_user, api_client):
     """Фикстура для залогиненного пользователя"""
-    import time
     from pages.login_page import LoginPage
     from pages.main_page import MainPage
     
@@ -177,7 +176,7 @@ def logged_in_user(driver, registered_user, api_client):
     from config.urls import Urls
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
-    wait = WebDriverWait(driver, 15)
+    wait = WebDriverWait(driver, Constants.TIMEOUT_LONG)
     
     try:
         wait.until(lambda d: "/login" not in d.current_url or Urls.BASE_URL.rstrip('/') in d.current_url)
@@ -208,8 +207,9 @@ def logged_in_user(driver, registered_user, api_client):
         except Exception:
             if attempt < max_retries - 1:
                 main_page.open()
-                time.sleep(2)
+                # Ждем загрузки страницы через expected_conditions вместо sleep
                 main_page.wait_for_page_load()
+                wait.until(EC.presence_of_element_located(main_page.locators.ORDER_BUTTON))
             else:
                 pass
     

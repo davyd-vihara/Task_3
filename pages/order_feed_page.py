@@ -2,6 +2,7 @@ from pages.base_page import BasePage
 from locators.order_feed_locators import OrderFeedPageLocators
 from locators.base_locators import BaseLocators
 from config.urls import Urls
+from config.constants import Constants
 from selenium.webdriver.common.by import By
 import allure
 
@@ -24,18 +25,19 @@ class OrderFeedPage(BasePage):
         self.click_by_js(self.locators.FIRST_ORDER)
     
     @allure.step("Проверить видимость модального окна заказа")
-    def is_order_modal_visible(self, timeout=10):
+    def is_order_modal_visible(self, timeout=None):
         """Проверяет видимость модального окна заказа"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         return self.is_element_visible(self.locators.ORDER_MODAL, timeout=timeout)
     
     @allure.step("Ожидать появления модального окна заказа")
-    def wait_for_order_modal(self, timeout=15):
+    def wait_for_order_modal(self, timeout=None):
         """Ожидает появления модального окна заказа"""
-        import time
         from selenium.webdriver.support import expected_conditions as EC
         
-        # Небольшая задержка для начала анимации
-        time.sleep(0.5)
+        if timeout is None:
+            timeout = Constants.TIMEOUT_LONG
         
         # Пробуем найти модальное окно разными способами
         wait = self.get_wait(timeout)
@@ -62,7 +64,7 @@ class OrderFeedPage(BasePage):
             wait.until(modal_appeared)
         except Exception:
             # Если не удалось найти, пробуем еще раз с базовым локатором
-            self.wait_for_element_to_be_visible(self.locators.ORDER_MODAL, timeout=5)
+            self.wait_for_element_to_be_visible(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Закрыть модальное окно заказа")
     def close_order_modal(self):
@@ -79,7 +81,7 @@ class OrderFeedPage(BasePage):
         """Получает счетчик 'Выполнено за всё время'"""
         try:
             # Ждем появления элемента счетчика
-            self.wait_for_element_to_be_visible(self.locators.TOTAL_ORDERS_COUNTER, timeout=5)
+            self.wait_for_element_to_be_visible(self.locators.TOTAL_ORDERS_COUNTER, timeout=Constants.TIMEOUT_DEFAULT)
             # Пробуем получить значение через локатор
             count_text = self.get_text(self.locators.TOTAL_ORDERS_COUNTER)
             # Убираем пробелы и преобразуем в число
@@ -111,18 +113,18 @@ class OrderFeedPage(BasePage):
         """Получает список заказов в работе"""
         try:
             # Сначала проверяем, что раздел "В работе" существует с коротким таймаутом
-            if not self.is_element_visible(self.locators.IN_PROGRESS_SECTION, timeout=2):
+            if not self.is_element_visible(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT):
                 return []
             
             # Получаем список заказов с коротким таймаутом
-            orders = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=2)
+            orders = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
             return [order.text for order in orders if order.text]
         except Exception as e:
             # Пробуем альтернативный способ поиска
             try:
                 # Ищем все элементы li в разделе "В работе" с коротким таймаутом
                 from selenium.webdriver.common.by import By
-                section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=2)
+                section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT)
                 orders = section.find_elements(By.TAG_NAME, "li")
                 return [order.text for order in orders if order.text]
             except Exception:
@@ -136,7 +138,7 @@ class OrderFeedPage(BasePage):
         
         # Сначала пробуем найти через текст раздела "В работе"
         try:
-            section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=2)
+            section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT)
             section_text_normalized = re.sub(r'\D', '', section.text)
             if order_num_normalized in section_text_normalized:
                 return True
@@ -145,7 +147,7 @@ class OrderFeedPage(BasePage):
         
         # Пробуем найти через элементы списка
         try:
-            in_progress_elements = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=2)
+            in_progress_elements = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
             for element in in_progress_elements:
                 try:
                     element_text_normalized = re.sub(r'\D', '', str(element.text))
@@ -171,17 +173,17 @@ class OrderFeedPage(BasePage):
     @allure.step("Проверить наличие номера заказа в модальном окне")
     def is_order_number_visible(self):
         """Проверяет наличие номера заказа в модальном окне"""
-        return self.is_element_visible(self.locators.ORDER_NUMBER, timeout=5)
+        return self.is_element_visible(self.locators.ORDER_NUMBER, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Проверить наличие заголовка заказа в модальном окне")
     def is_order_title_visible(self):
         """Проверяет наличие заголовка заказа в модальном окне"""
-        return self.is_element_visible(self.locators.ORDER_TITLE, timeout=5)
+        return self.is_element_visible(self.locators.ORDER_TITLE, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Проверить наличие статуса заказа в модальном окне")
     def is_order_status_visible(self):
         """Проверяет наличие статуса заказа в модальном окне"""
-        return self.is_element_visible(self.locators.ORDER_STATUS, timeout=5)
+        return self.is_element_visible(self.locators.ORDER_STATUS, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Проверить наличие раздела 'Состав' в модальном окне")
     def is_order_composition_visible(self):
@@ -189,7 +191,7 @@ class OrderFeedPage(BasePage):
         # Пробуем найти элемент разными способами
         try:
             # Сначала пробуем через локатор
-            if self.is_element_visible(self.locators.ORDER_COMPOSITION_TITLE, timeout=3):
+            if self.is_element_visible(self.locators.ORDER_COMPOSITION_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD):
                 return True
         except:
             pass
@@ -197,7 +199,7 @@ class OrderFeedPage(BasePage):
         # Если не нашли по локатору, пробуем найти по тексту напрямую в модальном окне
         try:
             # Ищем внутри модального окна
-            modal = self.find_element(self.locators.ORDER_MODAL, timeout=3)
+            modal = self.find_element(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_MODAL_LOAD)
             composition = modal.find_element(By.XPATH, ".//p[contains(text(), 'Состав')]")
             return composition and composition.is_displayed()
         except:

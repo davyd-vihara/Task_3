@@ -1,6 +1,7 @@
 from pages.base_page import BasePage
 from locators.main_locators import MainPageLocators
 from config.urls import Urls
+from config.constants import Constants
 from selenium.webdriver.common.by import By
 import allure
 
@@ -15,7 +16,7 @@ class MainPage(BasePage):
     def wait_for_page_load(self):
         """Ожидает исчезновения overlay перед взаимодействием с элементами"""
         try:
-            self.wait_for_element_to_disappear(self.locators.OVERLAY, timeout=5)
+            self.wait_for_element_to_disappear(self.locators.OVERLAY, timeout=Constants.TIMEOUT_DEFAULT)
         except:
             # Если overlay не найден или уже исчез, продолжаем
             pass
@@ -41,16 +42,23 @@ class MainPage(BasePage):
     @allure.step("Кликнуть по первому ингредиенту из булок")
     def click_first_bun_ingredient(self):
         """Кликает по первому ингредиенту из булок"""
-        import time
-        time.sleep(2)
-        
+        # Ждем появления ингредиента вместо sleep
         try:
-            ingredient = self.find_visible_element(self.locators.FIRST_BUN_INGREDIENT, timeout=5)
+            ingredient = self.find_visible_element(self.locators.FIRST_BUN_INGREDIENT, timeout=Constants.TIMEOUT_DEFAULT)
         except:
-            ingredient = self.find_visible_element((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"), timeout=10)
+            ingredient = self.find_visible_element((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"), timeout=Constants.TIMEOUT_MEDIUM)
         
+        # Прокручиваем элемент в видимую область
         self.execute_script("arguments[0].scrollIntoView({block: 'center'});", ingredient)
-        time.sleep(0.5)
+        # Ждем, пока элемент станет кликабельным после прокрутки
+        wait = self.get_wait(Constants.TIMEOUT_SHORT)
+        from selenium.webdriver.support import expected_conditions as EC
+        # Используем локатор ингредиента для проверки кликабельности
+        try:
+            wait.until(EC.element_to_be_clickable(self.locators.FIRST_BUN_INGREDIENT))
+        except:
+            # Если не нашли по основному локатору, пробуем альтернативный
+            wait.until(EC.element_to_be_clickable((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]")))
         self.execute_script("arguments[0].click();", ingredient)
     
     @allure.step("Кликнуть по первому ингредиенту из соусов")
@@ -107,8 +115,10 @@ class MainPage(BasePage):
         self.drag_and_drop_element(ingredient, constructor)
     
     @allure.step("Ожидать появления счетчика ингредиента")
-    def wait_for_ingredient_counter_not_zero(self, timeout=10):
+    def wait_for_ingredient_counter_not_zero(self, timeout=None):
         """Ожидает, пока счетчик ингредиента станет больше 0"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
         try:
             self.get_wait(timeout).until(
                 lambda d: int(
@@ -130,14 +140,14 @@ class MainPage(BasePage):
             except:
                 # Если не нашли внутри, ищем глобально
                 try:
-                    counter = self.find_element(self.locators.INGREDIENT_COUNTER_VALUE, timeout=2)
+                    counter = self.find_element(self.locators.INGREDIENT_COUNTER_VALUE, timeout=Constants.TIMEOUT_SHORT)
                     return int(counter.text) if counter.text else 0
                 except:
                     return 0
         except:
             # Если элемент ингредиента не найден, пробуем найти счетчик глобально
             try:
-                counter = self.find_element(self.locators.INGREDIENT_COUNTER_VALUE, timeout=2)
+                counter = self.find_element(self.locators.INGREDIENT_COUNTER_VALUE, timeout=Constants.TIMEOUT_SHORT)
                 return int(counter.text) if counter.text else 0
             except:
                 return 0
@@ -147,7 +157,7 @@ class MainPage(BasePage):
         """Проверяет, что пользователь авторизован (кнопка 'Оформить заказ' видна или кнопка 'Войти в аккаунт' НЕ видна)"""
         try:
             # Проверяем, что кнопка "Оформить заказ" видна
-            if self.is_element_visible(self.locators.ORDER_BUTTON, timeout=3):
+            if self.is_element_visible(self.locators.ORDER_BUTTON, timeout=Constants.TIMEOUT_MODAL_LOAD):
                 return True
         except Exception:
             pass
@@ -155,7 +165,7 @@ class MainPage(BasePage):
         # Если кнопка "Оформить заказ" не видна, проверяем, что кнопка "Войти в аккаунт" НЕ видна
         # (это тоже признак авторизации)
         try:
-            login_button_visible = self.is_element_visible(self.locators.LOGIN_BUTTON, timeout=2)
+            login_button_visible = self.is_element_visible(self.locators.LOGIN_BUTTON, timeout=Constants.TIMEOUT_SHORT)
             return not login_button_visible  # Если кнопка входа не видна, значит авторизованы
         except Exception:
             # Если не можем найти кнопку входа, считаем что авторизованы
@@ -175,8 +185,8 @@ class MainPage(BasePage):
         try:
             from locators.order_feed_locators import OrderFeedPageLocators
             # Проверяем наличие номера заказа (h2) или текста "идентификатор заказа"
-            return (self.is_element_visible(OrderFeedPageLocators.ORDER_NUMBER, timeout=5) or
-                    self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=5))
+            return (self.is_element_visible(OrderFeedPageLocators.ORDER_NUMBER, timeout=Constants.TIMEOUT_DEFAULT) or
+                    self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT))
         except Exception:
             return False
     
@@ -185,13 +195,13 @@ class MainPage(BasePage):
         """Получает весь текст из модального окна заказа"""
         try:
             # Используем локатор MODAL из main_locators, который указывает на контейнер модального окна
-            modal = self.find_element(self.locators.MODAL, timeout=5)
+            modal = self.find_element(self.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
             return modal.text
         except:
             # Если не получилось, пробуем альтернативный способ
             try:
                 from locators.order_feed_locators import OrderFeedPageLocators
-                modal = self.find_element(OrderFeedPageLocators.ORDER_MODAL, timeout=5)
+                modal = self.find_element(OrderFeedPageLocators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
                 return modal.text
             except:
                 return ""
@@ -215,10 +225,13 @@ class MainPage(BasePage):
             return False
     
     @allure.step("Ожидать появления и загрузки номера заказа в модальном окне")
-    def wait_for_order_number(self, timeout=30):
+    def wait_for_order_number(self, timeout=None):
         """Ожидает появления номера заказа в модальном окне и его обновления"""
         from locators.order_feed_locators import OrderFeedPageLocators
         from selenium.common.exceptions import TimeoutException
+        
+        if timeout is None:
+            timeout = Constants.TIMEOUT_VERY_LONG
         
         # Сначала ждем появления модального окна
         self.wait_for_element_to_be_visible(self.locators.MODAL, timeout=timeout)
@@ -244,19 +257,18 @@ class MainPage(BasePage):
             try:
                 identifier_elem = driver.find_element(*OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT)
                 if identifier_elem and identifier_elem.is_displayed():
-                    # Если есть текст "идентификатор заказа", ждем еще немного для загрузки номера
-                    import time
-                    time.sleep(1)
-                    # Проверяем номер заказа еще раз
+                    # Если есть текст "идентификатор заказа", ждем появления номера заказа через expected_conditions
+                    from selenium.webdriver.support.ui import WebDriverWait
+                    from selenium.webdriver.support import expected_conditions as EC
                     try:
-                        order_number_elem = driver.find_element(*OrderFeedPageLocators.ORDER_NUMBER)
-                        if order_number_elem and order_number_elem.is_displayed():
-                            order_text = order_number_elem.text.strip()
-                            if order_text and any(char.isdigit() for char in order_text):
-                                return True
+                        # Ждем появления номера заказа с цифрами
+                        WebDriverWait(driver, Constants.TIMEOUT_SHORT).until(
+                            lambda d: any(char.isdigit() for char in d.find_element(*OrderFeedPageLocators.ORDER_NUMBER).text.strip())
+                        )
+                        return True
                     except Exception:
-                        pass
-                    return True
+                        # Если номер не появился, все равно возвращаем True, так как идентификатор найден
+                        return True
             except Exception:
                 pass
             return False
@@ -265,13 +277,16 @@ class MainPage(BasePage):
             wait.until(order_number_loaded)
         except TimeoutException:
             # Если не удалось дождаться, проверяем наличие хотя бы текста "идентификатор заказа"
-            if not self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=5):
+            if not self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT):
                 raise TimeoutException("Не удалось дождаться появления номера заказа в модальном окне")
     
     @allure.step("Получить номер заказа из модального окна")
-    def get_order_number_from_modal(self, timeout=30):
+    def get_order_number_from_modal(self, timeout=None):
         """Получает номер заказа из модального окна с увеличенным таймаутом и альтернативными способами"""
         from locators.order_feed_locators import OrderFeedPageLocators
+        
+        if timeout is None:
+            timeout = Constants.TIMEOUT_VERY_LONG
         
         # Сначала пытаемся получить номер заказа через локатор h2 с увеличенным таймаутом
         try:

@@ -110,6 +110,14 @@ class BasePage:
         """Возвращает текущий URL"""
         return self.driver.current_url
     
+    @allure.step("Проверить изменение URL")
+    def wait_for_url_changed(self, url_before, timeout=None):
+        """Ожидает изменения URL (уходит с текущей страницы)"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
+        wait = self.get_wait(timeout)
+        return wait.until(lambda d: d.current_url != url_before)
+    
     @allure.step("Проверить, что URL содержит часть")
     def wait_for_url_contains(self, url_part, timeout=None):
         """Ожидает, что URL содержит указанную часть"""

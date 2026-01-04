@@ -52,33 +52,11 @@ class LoginPage(BasePage):
         self.click_login_button()
         
         # Ждем перехода на главную страницу после успешного входа
-        wait = self.get_wait(Constants.TIMEOUT_LONG)
+        # Линейный сценарий: ждем, пока URL изменится (уйдет со страницы логина)
+        self.wait_for_url_changed(url_before, timeout=Constants.TIMEOUT_LONG)
         
-        # Ждем, пока URL изменится (уйдет со страницы логина)
-        # Используем expected_conditions для проверки изменения URL
-        try:
-            # Проверяем, что URL изменился (не равен исходному) через явное ожидание
-            wait.until(lambda d: d.current_url != url_before)
-        except TimeoutException:
-            # Если не перешли, проверяем, что хотя бы URL не содержит "/login"
-            try:
-                wait.until(EC.not_(EC.url_contains("/login")))
-            except TimeoutException:
-                url_after = self.get_current_url()
-                if url_before == url_after:
-                    # Выбрасываем специфичное исключение вместо общего Exception
-                    raise TimeoutException(
-                        f"Авторизация не прошла. URL не изменился. "
-                        f"Было: {url_before}, Стало: {url_after}. "
-                        f"Возможно, неверные данные: email={email}"
-                    )
-        
-        # Ждем сохранения токена в cookies/localStorage через проверку наличия токена
-        try:
-            wait.until(lambda d: self.execute_script("return localStorage.getItem('accessToken') || document.cookie.includes('token')"))
-        except TimeoutException:
-            # Если токен не найден, это не критично - продолжаем
-            pass
+        # Линейный сценарий: ждем, что URL не содержит "/login"
+        self.wait_for_url_not_contains("/login", timeout=Constants.TIMEOUT_LONG)
     
     @allure.step("Проверить видимость формы входа")
     def is_login_form_visible(self):

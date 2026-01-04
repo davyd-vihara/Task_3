@@ -36,8 +36,6 @@ class BasePage:
             return wait.until(EC.presence_of_all_elements_located(locator))
         except (TimeoutException, WebDriverException):
             return []
-        except Exception:
-            return []
     
     @allure.step("Найти видимый элемент")
     def find_visible_element(self, locator, timeout=None):
@@ -53,7 +51,7 @@ class BasePage:
         element = self.find_visible_element(locator)
         try:
             element.click()
-        except Exception:
+        except (WebDriverException, TimeoutException):
             # Если обычный клик не работает (например, элемент перекрыт overlay), используем JavaScript
             self.execute_script("arguments[0].click();", element)
     
@@ -92,8 +90,6 @@ class BasePage:
             element = wait.until(EC.visibility_of_element_located(locator))
             return element.is_displayed()
         except (TimeoutException, WebDriverException):
-            return False
-        except Exception:
             return False
     
     @allure.step("Ожидать исчезновения элемента")

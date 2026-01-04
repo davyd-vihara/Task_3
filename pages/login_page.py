@@ -4,6 +4,7 @@ from config.urls import Urls
 from config.constants import Constants
 import allure
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 class LoginPage(BasePage):
     """Страница входа"""
@@ -58,14 +59,15 @@ class LoginPage(BasePage):
         try:
             # Проверяем, что URL изменился (не равен исходному) через явное ожидание
             wait.until(lambda d: d.current_url != url_before)
-        except Exception:
+        except TimeoutException:
             # Если не перешли, проверяем, что хотя бы URL не содержит "/login"
             try:
                 wait.until(EC.not_(EC.url_contains("/login")))
-            except Exception:
+            except TimeoutException:
                 url_after = self.get_current_url()
                 if url_before == url_after:
-                    raise Exception(
+                    # Выбрасываем специфичное исключение вместо общего Exception
+                    raise TimeoutException(
                         f"Авторизация не прошла. URL не изменился. "
                         f"Было: {url_before}, Стало: {url_after}. "
                         f"Возможно, неверные данные: email={email}"
@@ -74,7 +76,7 @@ class LoginPage(BasePage):
         # Ждем сохранения токена в cookies/localStorage через проверку наличия токена
         try:
             wait.until(lambda d: self.execute_script("return localStorage.getItem('accessToken') || document.cookie.includes('token')"))
-        except Exception:
+        except TimeoutException:
             # Если токен не найден, это не критично - продолжаем
             pass
     

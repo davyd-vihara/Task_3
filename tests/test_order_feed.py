@@ -5,6 +5,7 @@ from pages.order_feed_page import OrderFeedPage
 from config.constants import Constants
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 @allure.feature("Лента заказов")
 @allure.story("Функциональность ленты заказов")
@@ -56,7 +57,8 @@ class TestOrderFeed:
             try:
                 user_orders = api_client.get_user_orders(user["access_token"])
                 user_order_numbers = [order.get("number") for order in user_orders.get("orders", [])]
-            except Exception:
+            except (KeyError, AttributeError, TypeError):
+                # Обрабатываем ошибки доступа к данным API
                 user_order_numbers = []
         
         # Переходим в ленту заказов
@@ -179,8 +181,9 @@ class TestOrderFeed:
             try:
                 # Ждем, пока модальное окно полностью закроется
                 wait_before_feed.until(EC.invisibility_of_element_located(main_page.locators.MODAL))
-            except Exception:
-                pass  # Если модальное окно уже закрыто, продолжаем
+            except TimeoutException:
+                # Если модальное окно уже закрыто или не найдено, продолжаем
+                pass
             
             main_page.click_order_feed_button()
             order_feed_page = OrderFeedPage(driver)
@@ -196,7 +199,7 @@ class TestOrderFeed:
                 # Ждем, пока счетчик увеличится (явное ожидание через expected_conditions)
                 wait.until(lambda d: order_feed_page.get_today_orders_count() > initial_today)
                 new_today = order_feed_page.get_today_orders_count()
-            except Exception:
+            except TimeoutException:
                 # Если явное ожидание не сработало, используем несколько попыток с обновлением страницы
                 max_attempts = 25  # Увеличено количество попыток
                 new_today = initial_today
@@ -217,7 +220,7 @@ class TestOrderFeed:
                         if current_count > initial_today:
                             new_today = current_count
                             break
-                    except Exception as e:
+                    except (TimeoutException, AttributeError, ValueError) as e:
                         if attempt == max_attempts - 1:
                             print(f"Ошибка при проверке счетчика (попытка {attempt + 1}): {str(e)}")
                     
@@ -227,7 +230,7 @@ class TestOrderFeed:
                             # Используем более длительное ожидание для задержки между попытками
                             wait_attempt = WebDriverWait(driver, Constants.TIMEOUT_MODAL_LOAD)
                             wait_attempt.until(EC.presence_of_element_located(order_feed_page.locators.TODAY_ORDERS_COUNTER))
-                        except Exception:
+                        except TimeoutException:
                             # Если элемент не найден, просто продолжаем
                             pass
         
@@ -285,7 +288,7 @@ class TestOrderFeed:
                     if section_visible and order_feed_page.is_order_in_progress(order_num):
                         found = True
                         break
-                except Exception as e:
+                except (TimeoutException, AttributeError, ValueError) as e:
                     print(f"Ошибка при проверке раздела 'В работе' (попытка {attempt + 1}): {str(e)}")
                 
                 # Используем ожидание через expected_conditions вместо sleep
@@ -295,7 +298,7 @@ class TestOrderFeed:
                         wait.until(lambda d: order_feed_page.is_order_in_progress(order_num))
                         found = True
                         break
-                    except Exception:
+                    except TimeoutException:
                         pass
         
         with allure.step("Проверяем, что номер заказа появился в разделе 'В работе'"):

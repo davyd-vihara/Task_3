@@ -9,5 +9,6 @@ class PasswordRecoveryPageLocators:
     # Поле ввода кода (появляется после ввода email и клика "Восстановить")
     # На странице reset-password есть label с текстом "Введите код из письма"
     CODE_INPUT = (By.XPATH, "//label[contains(@class, 'input_placeholder') and contains(text(), 'Введите код')]")
+    CODE_INPUT_ALTERNATIVE = (By.XPATH, "//label[contains(text(), 'Введите код')]")
     RECOVERY_FORM = (By.XPATH, "//form[contains(@class, 'Auth_form')]")
 

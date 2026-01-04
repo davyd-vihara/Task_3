@@ -46,7 +46,7 @@ class PasswordRecoveryPage(BasePage):
         except (TimeoutException, NoSuchElementException):
             # Альтернативный поиск - ищем по тексту
             try:
-                code_label = self.find_element_direct(By.XPATH, "//label[contains(text(), 'Введите код')]")
+                code_label = self.find_element_direct(*self.locators.CODE_INPUT_ALTERNATIVE)
                 return code_label.is_displayed()
             except (NoSuchElementException, AttributeError):
                 return False

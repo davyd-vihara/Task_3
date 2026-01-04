@@ -46,15 +46,15 @@ class OrderFeedPage(BasePage):
         def modal_appeared(driver):
             # Пробуем разные варианты локаторов
             locators_to_try = [
-                (By.XPATH, "//section[2]/div[1]/div"),
-                (By.XPATH, "//*[@id='root']/div/section[2]/div[1]/div"),
-                (By.XPATH, "//div[contains(@class, 'Modal_modal_container')]"),
-                (By.XPATH, "//div[contains(@class, 'Modal_modal__container')]"),
+                self.locators.ORDER_MODAL,
+                self.locators.ORDER_MODAL_ALTERNATIVE_1,
+                self.locators.ORDER_MODAL_ALTERNATIVE_2,
+                self.locators.ORDER_MODAL_ALTERNATIVE_3,
             ]
             
-            for by, locator in locators_to_try:
+            for locator in locators_to_try:
                 try:
-                    element = driver.find_element(by, locator)
+                    element = driver.find_element(*locator)
                     if element and element.is_displayed():
                         return True
                 except (NoSuchElementException, WebDriverException):
@@ -201,14 +201,14 @@ class OrderFeedPage(BasePage):
         try:
             # Ищем внутри модального окна
             modal = self.find_element(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_MODAL_LOAD)
-            composition = modal.find_element(By.XPATH, ".//p[contains(text(), 'Состав')]")
+            composition = modal.find_element(*self.locators.ORDER_COMPOSITION_TITLE_ALTERNATIVE)
             return composition and composition.is_displayed()
         except (TimeoutException, NoSuchElementException):
             pass
         
         # Пробуем глобальный поиск
         try:
-            composition = self.find_element_direct(By.XPATH, "//p[contains(text(), 'Состав')]")
+            composition = self.find_element_direct(*self.locators.ORDER_COMPOSITION_TITLE_GLOBAL)
             return composition and composition.is_displayed()
         except (NoSuchElementException, WebDriverException):
             return False

@@ -48,7 +48,7 @@ class MainPage(BasePage):
             ingredient = self.find_visible_element(self.locators.FIRST_BUN_INGREDIENT, timeout=Constants.TIMEOUT_DEFAULT)
         except (TimeoutException, NoSuchElementException):
             # Если не нашли по основному локатору, пробуем альтернативный
-            ingredient = self.find_visible_element((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]"), timeout=Constants.TIMEOUT_MEDIUM)
+            ingredient = self.find_visible_element(self.locators.FIRST_BUN_INGREDIENT_ALTERNATIVE, timeout=Constants.TIMEOUT_MEDIUM)
         
         # Прокручиваем элемент в видимую область
         self.execute_script("arguments[0].scrollIntoView({block: 'center'});", ingredient)
@@ -60,7 +60,7 @@ class MainPage(BasePage):
             wait.until(EC.element_to_be_clickable(self.locators.FIRST_BUN_INGREDIENT))
         except TimeoutException:
             # Если не нашли по основному локатору, пробуем альтернативный
-            wait.until(EC.element_to_be_clickable((By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]")))
+            wait.until(EC.element_to_be_clickable(self.locators.FIRST_BUN_INGREDIENT_ALTERNATIVE))
         self.execute_script("arguments[0].click();", ingredient)
     
     @allure.step("Кликнуть по первому ингредиенту из соусов")

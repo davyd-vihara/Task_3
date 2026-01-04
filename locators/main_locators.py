@@ -10,6 +10,7 @@ class MainPageLocators:
     SAUCE_SECTION = (By.XPATH, "//h2[text()='Соусы']/parent::div")
     FILLING_SECTION = (By.XPATH, "//h2[text()='Начинки']/parent::div")
     FIRST_BUN_INGREDIENT = (By.XPATH, "//a[contains(@class, 'BurgerIngredient_ingredient')]//p[text()='Флюоресцентная булка R2-D3']/parent::a")
+    FIRST_BUN_INGREDIENT_ALTERNATIVE = (By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[1]")
     FIRST_SAUCE_INGREDIENT = (By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[6]")
     FIRST_FILLING_INGREDIENT = (By.XPATH, "(//a[contains(@class, 'BurgerIngredient_ingredient')])[11]")
     INGREDIENT_COUNTER = (By.XPATH, ".//p[contains(@class, 'counter_counter__num')]")

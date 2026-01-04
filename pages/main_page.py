@@ -141,15 +141,9 @@ class MainPage(BasePage):
     
     @allure.step("Проверить, что пользователь авторизован")
     def is_user_logged_in(self):
-        """Проверяет, что пользователь авторизован (кнопка 'Оформить заказ' видна или кнопка 'Войти в аккаунт' НЕ видна)"""
-        # Линейный сценарий: проверяем видимость кнопки "Оформить заказ"
-        if self.is_element_visible(self.locators.ORDER_BUTTON, timeout=Constants.TIMEOUT_MODAL_LOAD):
-            return True
-        
-        # Если кнопка "Оформить заказ" не видна, проверяем, что кнопка "Войти в аккаунт" НЕ видна
-        # (это тоже признак авторизации)
-        login_button_visible = self.is_element_visible(self.locators.LOGIN_BUTTON, timeout=Constants.TIMEOUT_SHORT)
-        return not login_button_visible  # Если кнопка входа не видна, значит авторизованы
+        """Проверяет, что пользователь авторизован (кнопка 'Оформить заказ' видна)"""
+        # Упрощенная проверка: если кнопка видна - true, если нет - false
+        return self.is_element_visible(self.locators.ORDER_BUTTON, timeout=Constants.TIMEOUT_MODAL_LOAD)
     
     @allure.step("Кликнуть по кнопке 'Оформить заказ'")
     def click_order_button(self):
@@ -186,20 +180,16 @@ class MainPage(BasePage):
     @allure.step("Проверить наличие текста 'Ваш заказ начали готовить'")
     def is_order_cooking_text_visible(self):
         """Проверяет наличие текста 'Ваш заказ начали готовить'"""
-        try:
-            from locators.order_feed_locators import OrderFeedPageLocators
-            return self.is_element_visible(OrderFeedPageLocators.ORDER_SUCCESS_TEXT)
-        except (TimeoutException, NoSuchElementException, AttributeError):
-            return False
+        from locators.order_feed_locators import OrderFeedPageLocators
+        # Упрощенная проверка: если элемент виден - true, если нет - false
+        return self.is_element_visible(OrderFeedPageLocators.ORDER_SUCCESS_TEXT)
     
     @allure.step("Проверить наличие текста 'Дождитесь готовности на орбитальной станции'")
     def is_order_wait_text_visible(self):
         """Проверяет наличие текста 'Дождитесь готовности на орбитальной станции'"""
-        try:
-            from locators.order_feed_locators import OrderFeedPageLocators
-            return self.is_element_visible(OrderFeedPageLocators.ORDER_WAIT_TEXT)
-        except (TimeoutException, NoSuchElementException, AttributeError):
-            return False
+        from locators.order_feed_locators import OrderFeedPageLocators
+        # Упрощенная проверка: если элемент виден - true, если нет - false
+        return self.is_element_visible(OrderFeedPageLocators.ORDER_WAIT_TEXT)
     
     @allure.step("Ожидать появления и загрузки номера заказа в модальном окне")
     def wait_for_order_number(self, timeout=None):

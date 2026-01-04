@@ -189,28 +189,7 @@ class OrderFeedPage(BasePage):
     @allure.step("Проверить наличие раздела 'Состав' в модальном окне")
     def is_order_composition_visible(self):
         """Проверяет наличие раздела 'Состав' в модальном окне"""
-        # Пробуем найти элемент разными способами
-        try:
-            # Сначала пробуем через локатор
-            if self.is_element_visible(self.locators.ORDER_COMPOSITION_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD):
-                return True
-        except (TimeoutException, NoSuchElementException):
-            pass
-        
-        # Если не нашли по локатору, пробуем найти по тексту напрямую в модальном окне
-        try:
-            # Ищем внутри модального окна
-            modal = self.find_element(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_MODAL_LOAD)
-            composition = modal.find_element(*self.locators.ORDER_COMPOSITION_TITLE_ALTERNATIVE)
-            return composition and composition.is_displayed()
-        except (TimeoutException, NoSuchElementException):
-            pass
-        
-        # Пробуем глобальный поиск
-        try:
-            composition = self.find_element_direct(*self.locators.ORDER_COMPOSITION_TITLE_GLOBAL)
-            return composition and composition.is_displayed()
-        except (NoSuchElementException, WebDriverException):
-            return False
+        # Упрощенная проверка: если элемент виден - true, если нет - false
+        return self.is_element_visible(self.locators.ORDER_COMPOSITION_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD)
 
 

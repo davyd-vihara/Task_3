@@ -40,27 +40,16 @@ class PasswordRecoveryPage(BasePage):
         if "reset-password" not in current_url:
             return False
         
-        # Ищем label с текстом "Введите код"
-        try:
-            return self.is_element_visible(self.locators.CODE_INPUT, timeout=Constants.TIMEOUT_DEFAULT)
-        except (TimeoutException, NoSuchElementException):
-            # Альтернативный поиск - ищем по тексту
-            try:
-                code_label = self.find_element_direct(*self.locators.CODE_INPUT_ALTERNATIVE)
-                return code_label.is_displayed()
-            except (NoSuchElementException, AttributeError):
-                return False
+        # Упрощенная проверка: если элемент виден - true, если нет - false
+        return self.is_element_visible(self.locators.CODE_INPUT, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Проверить подсветку поля пароля")
     def is_password_field_highlighted(self):
         """Проверяет подсветку поля пароля"""
-        try:
-            password_field = self.find_visible_element(self.locators.PASSWORD_INPUT)
-            # Проверяем наличие класса или стиля, указывающего на активное состояние
-            classes = password_field.get_attribute("class")
-            return "input_status_active" in classes or "input__status_active" in classes
-        except (TimeoutException, NoSuchElementException, AttributeError):
-            return False
+        # Упрощенная проверка: получаем элемент и проверяем класс
+        password_field = self.find_visible_element(self.locators.PASSWORD_INPUT)
+        classes = password_field.get_attribute("class")
+        return "input_status_active" in classes or "input__status_active" in classes
     
     @allure.step("Получить тип поля пароля")
     def get_password_field_type(self):

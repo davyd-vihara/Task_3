@@ -27,10 +27,8 @@ class ProfilePage(BasePage):
         """Проверяет видимость страницы профиля"""
         current_url = self.get_current_url()
         is_profile_url = "account/profile" in current_url or "account" in current_url
-        try:
-            has_profile_elements = self.is_element_visible(self.locators.PROFILE_PAGE_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD)
-        except (TimeoutException, NoSuchElementException):
-            has_profile_elements = False
+        # Упрощенная проверка: если URL правильный или элемент виден - true, если нет - false
+        has_profile_elements = self.is_element_visible(self.locators.PROFILE_PAGE_TITLE, timeout=Constants.TIMEOUT_MODAL_LOAD)
         return is_profile_url or has_profile_elements
     
     @allure.step("Проверить видимость истории заказов")

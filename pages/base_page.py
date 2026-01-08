@@ -2,6 +2,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from config.constants import Constants
+from seletools.actions import drag_and_drop
 import allure
 
 class BasePage:
@@ -64,7 +65,6 @@ class BasePage:
     @allure.step("Перетащить элемент")
     def drag_and_drop_element(self, source, target):
         """Перетаскивает элемент из source в target (использует seletools для надежной работы в Firefox)"""
-        from seletools.actions import drag_and_drop
         drag_and_drop(self.driver, source, target)
     
     @allure.step("Ввести текст в поле")

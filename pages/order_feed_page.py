@@ -4,7 +4,9 @@ from locators.base_locators import BaseLocators
 from config.urls import Urls
 from config.constants import Constants
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
+import re
 import allure
 
 class OrderFeedPage(BasePage):
@@ -35,8 +37,6 @@ class OrderFeedPage(BasePage):
     @allure.step("Ожидать появления модального окна заказа")
     def wait_for_order_modal(self, timeout=None):
         """Ожидает появления модального окна заказа"""
-        from selenium.webdriver.support import expected_conditions as EC
-        
         if timeout is None:
             timeout = Constants.TIMEOUT_LONG
         
@@ -124,7 +124,6 @@ class OrderFeedPage(BasePage):
             # Пробуем альтернативный способ поиска
             try:
                 # Ищем все элементы li в разделе "В работе" с коротким таймаутом
-                from selenium.webdriver.common.by import By
                 section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT)
                 orders = section.find_elements(By.TAG_NAME, "li")
                 return [order.text for order in orders if order.text]
@@ -134,7 +133,6 @@ class OrderFeedPage(BasePage):
     @allure.step("Проверить, есть ли заказ в разделе 'В работе'")
     def is_order_in_progress(self, order_number):
         """Проверяет, есть ли заказ в разделе 'В работе'"""
-        import re
         order_num_normalized = re.sub(r'\D', '', str(order_number))
         
         # Сначала пробуем найти через текст раздела "В работе"

@@ -5,6 +5,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from config.constants import Constants
 import os
+import tempfile
 
 class DriverFactory:
     """Фабрика для создания драйверов разных браузеров"""
@@ -64,7 +65,6 @@ class DriverFactory:
                 # Если ошибка связана с rate limit, пробуем найти в кэше
                 if "rate limit" in str(e).lower() or "API rate limit" in str(e):
                     # Ищем geckodriver в стандартных местах кэша webdriver-manager
-                    import tempfile
                     cache_dir = os.path.join(tempfile.gettempdir(), ".wdm")
                     # Ищем geckodriver.exe в кэше
                     for root, dirs, files in os.walk(cache_dir):

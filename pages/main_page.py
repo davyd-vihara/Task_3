@@ -1,9 +1,13 @@
 from pages.base_page import BasePage
 from locators.main_locators import MainPageLocators
+from locators.order_feed_locators import OrderFeedPageLocators
 from config.urls import Urls
 from config.constants import Constants
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import re
 import allure
 
 class MainPage(BasePage):
@@ -54,7 +58,6 @@ class MainPage(BasePage):
         self.execute_script("arguments[0].scrollIntoView({block: 'center'});", ingredient)
         # Ждем, пока элемент станет кликабельным после прокрутки
         wait = self.get_wait(Constants.TIMEOUT_SHORT)
-        from selenium.webdriver.support import expected_conditions as EC
         # Используем локатор ингредиента для проверки кликабельности
         try:
             wait.until(EC.element_to_be_clickable(self.locators.FIRST_BUN_INGREDIENT))
@@ -156,7 +159,6 @@ class MainPage(BasePage):
     @allure.step("Проверить видимость сообщения об успешном заказе")
     def is_order_success_visible(self):
         """Проверяет видимость сообщения об успешном заказе (номер заказа или текст 'идентификатор заказа')"""
-        from locators.order_feed_locators import OrderFeedPageLocators
         # Линейный сценарий: проверяем наличие номера заказа (h2) или текста "идентификатор заказа"
         return (self.is_element_visible(OrderFeedPageLocators.ORDER_NUMBER, timeout=Constants.TIMEOUT_DEFAULT) or
                 self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT))
@@ -171,7 +173,6 @@ class MainPage(BasePage):
         except (TimeoutException, NoSuchElementException):
             # Если не получилось, пробуем альтернативный способ
             try:
-                from locators.order_feed_locators import OrderFeedPageLocators
                 modal = self.find_element(OrderFeedPageLocators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
                 return modal.text
             except (TimeoutException, NoSuchElementException):
@@ -180,23 +181,18 @@ class MainPage(BasePage):
     @allure.step("Проверить наличие текста 'Ваш заказ начали готовить'")
     def is_order_cooking_text_visible(self):
         """Проверяет наличие текста 'Ваш заказ начали готовить'"""
-        from locators.order_feed_locators import OrderFeedPageLocators
         # Упрощенная проверка: если элемент виден - true, если нет - false
         return self.is_element_visible(OrderFeedPageLocators.ORDER_SUCCESS_TEXT)
     
     @allure.step("Проверить наличие текста 'Дождитесь готовности на орбитальной станции'")
     def is_order_wait_text_visible(self):
         """Проверяет наличие текста 'Дождитесь готовности на орбитальной станции'"""
-        from locators.order_feed_locators import OrderFeedPageLocators
         # Упрощенная проверка: если элемент виден - true, если нет - false
         return self.is_element_visible(OrderFeedPageLocators.ORDER_WAIT_TEXT)
     
     @allure.step("Ожидать появления и загрузки номера заказа в модальном окне")
     def wait_for_order_number(self, timeout=None):
         """Ожидает появления номера заказа в модальном окне и его обновления"""
-        from locators.order_feed_locators import OrderFeedPageLocators
-        from selenium.common.exceptions import TimeoutException
-        
         if timeout is None:
             timeout = Constants.TIMEOUT_VERY_LONG
         
@@ -225,8 +221,6 @@ class MainPage(BasePage):
                 identifier_elem = driver.find_element(*OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT)
                 if identifier_elem and identifier_elem.is_displayed():
                     # Если есть текст "идентификатор заказа", ждем появления номера заказа через expected_conditions
-                    from selenium.webdriver.support.ui import WebDriverWait
-                    from selenium.webdriver.support import expected_conditions as EC
                     try:
                         # Ждем появления номера заказа с цифрами
                         WebDriverWait(driver, Constants.TIMEOUT_SHORT).until(
@@ -250,8 +244,6 @@ class MainPage(BasePage):
     @allure.step("Получить номер заказа из модального окна")
     def get_order_number_from_modal(self, timeout=None):
         """Получает номер заказа из модального окна с увеличенным таймаутом и альтернативными способами"""
-        from locators.order_feed_locators import OrderFeedPageLocators
-        
         if timeout is None:
             timeout = Constants.TIMEOUT_VERY_LONG
         
@@ -269,7 +261,6 @@ class MainPage(BasePage):
             modal_text = self.get_order_modal_text()
             if modal_text:
                 # Ищем число в тексте модального окна (номер заказа обычно большое число)
-                import re
                 # Ищем числа из 4+ цифр (номера заказов обычно большие)
                 numbers = re.findall(r'\d{4,}', modal_text)
                 if numbers:

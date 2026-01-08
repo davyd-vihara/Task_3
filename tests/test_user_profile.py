@@ -19,7 +19,8 @@ class TestUserProfile:
         with allure.step("Кликаем по кнопке 'Личный кабинет'"):
             main_page.click_personal_account_button()
         
-        assert Urls.PROFILE_PAGE in driver.current_url, "Страница профиля не открылась"
+        with allure.step("Проверяем, что открылась страница профиля"):
+            assert Urls.PROFILE_PAGE in driver.current_url, "Страница профиля не открылась"
     
     @allure.title("Переход в раздел 'История заказов'")
     def test_go_to_order_history(self, driver, logged_in_user):
@@ -34,7 +35,8 @@ class TestUserProfile:
         with allure.step("Кликаем по ссылке 'История заказов'"):
             profile_page.click_order_history_link()
         
-        assert Urls.ORDER_HISTORY_PAGE in driver.current_url, "Страница истории заказов не открылась"
+        with allure.step("Проверяем, что открылась страница истории заказов"):
+            assert Urls.ORDER_HISTORY_PAGE in driver.current_url, "Страница истории заказов не открылась"
     
     @allure.title("Выход из аккаунта")
     def test_logout(self, driver, logged_in_user):
@@ -54,7 +56,8 @@ class TestUserProfile:
             wait = WebDriverWait(driver, Constants.TIMEOUT_MEDIUM)
             wait.until(lambda d: login_page.is_login_title_visible())
         
-        assert login_page.is_login_title_visible(), f"Заголовок '{Constants.LOGIN_TITLE}' не найден на странице"
-        assert login_page.are_login_fields_available(), \
-            "Поля логин и пароль не доступны на странице входа"
+        with allure.step("Проверяем, что открылась страница входа"):
+            assert login_page.is_login_title_visible(), f"Заголовок '{Constants.LOGIN_TITLE}' не найден на странице"
+            assert login_page.are_login_fields_available(), \
+                "Поля логин и пароль не доступны на странице входа"
 

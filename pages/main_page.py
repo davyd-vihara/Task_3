@@ -20,11 +20,7 @@ class MainPage(BasePage):
     @allure.step("Ожидать загрузки главной страницы")
     def wait_for_page_load(self):
         """Ожидает исчезновения overlay перед взаимодействием с элементами"""
-        try:
-            self.wait_for_element_to_disappear(self.locators.OVERLAY, timeout=Constants.TIMEOUT_DEFAULT)
-        except (TimeoutException, NoSuchElementException):
-            # Если overlay не найден или уже исчез, продолжаем
-            pass
+        self.wait_for_element_to_disappear(self.locators.OVERLAY, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Кликнуть по кнопке 'Конструктор'")
     def click_constructor_button(self):

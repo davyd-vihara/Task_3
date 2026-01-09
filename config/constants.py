@@ -13,7 +13,7 @@ class BrowserConfig:
     FULLSCREEN = os.getenv("FULLSCREEN", "true").lower() == "true"
     REUSE_BROWSER = os.getenv("REUSE_BROWSER", "false").lower() == "true"
 
-
+    
 class TestData:
     """Тестовые данные"""
     TEST_EMAIL = os.getenv("TEST_EMAIL", "test@example.com")
@@ -21,7 +21,7 @@ class TestData:
     TEST_USER_PREFIX = "test_"
     TEST_USER_NAME_PREFIX = "TestUser"
     DEFAULT_PASSWORD = "123456"  # Фиксированный пароль для тестовых пользователей
-
+    
 
 class UITexts:
     """Текстовые константы UI"""
@@ -32,7 +32,7 @@ class UITexts:
     ORDER_COOKING_TEXT = "Ваш заказ начали готовить"
     ORDER_WAIT_TEXT = "Дождитесь готовности на орбитальной станции"
     LOGIN_TITLE = "Вход"
-
+    
 
 class Timeouts:
     """Таймауты (в секундах)"""

@@ -154,10 +154,8 @@ class MainPage(BasePage):
     
     @allure.step("Проверить видимость сообщения об успешном заказе")
     def is_order_success_visible(self):
-        """Проверяет видимость сообщения об успешном заказе (номер заказа или текст 'идентификатор заказа')"""
-        # Линейный сценарий: проверяем наличие номера заказа (h2) или текста "идентификатор заказа"
-        return (self.is_element_visible(OrderFeedPageLocators.ORDER_NUMBER, timeout=Constants.TIMEOUT_DEFAULT) or
-                self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT))
+        """Проверяет видимость сообщения об успешном заказе по наличию текста 'идентификатор заказа'"""
+        return self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT)
     
     @allure.step("Получить текст модального окна заказа")
     def get_order_modal_text(self):

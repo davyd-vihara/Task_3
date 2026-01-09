@@ -185,7 +185,7 @@ class TestOrderFeed:
         with allure.step("Проверяем, что модальное окно заказа появилось и получаем номер заказа"):
             assert main_page.is_modal_visible(), "Модальное окно заказа должно быть видно"
             order_number = main_page.get_order_number_from_modal(timeout=Constants.TIMEOUT_MODAL_LOAD)
-            assert order_number and order_number.strip(), "Номер заказа не найден в модальном окне"
+        assert order_number and order_number.strip(), "Номер заказа не найден в модальном окне"
         
         with allure.step("Закрываем модальное окно"):
             main_page.close_modal()

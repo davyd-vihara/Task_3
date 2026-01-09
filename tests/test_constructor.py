@@ -215,3 +215,19 @@ class TestConstructor:
             assert Constants.ORDER_WAIT_TEXT in modal_text, \
                 f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"
 
+        assert main_page.is_modal_visible(), "Модальное окно заказа не появилось"
+        assert main_page.is_order_success_visible(), \
+            "Идентификатор заказа не найден в модальном окне"
+        order_number = main_page.get_order_number_from_modal(timeout=Constants.TIMEOUT_MODAL_LOAD)
+        assert order_number and order_number.strip(), \
+            f"Номер заказа не найден в модальном окне. Получено: {order_number}"
+        assert main_page.is_order_cooking_text_visible(), \
+            f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне"
+        assert main_page.is_order_wait_text_visible(), \
+            f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне"
+        modal_text = main_page.get_order_modal_text()
+        assert modal_text, "Не удалось получить текст модального окна"
+        assert Constants.ORDER_COOKING_TEXT in modal_text, \
+            f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"
+        assert Constants.ORDER_WAIT_TEXT in modal_text, \
+            f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"

@@ -26,12 +26,9 @@ class TestUserProfile:
         """Проверяет переход в раздел 'История заказов'"""
         main_page = logged_in_user["main_page"]
         
-        with allure.step("Переходим в личный кабинет"):
+        with allure.step("Переходим в личный кабинет и открываем историю заказов"):
             main_page.click_personal_account_button()
-        
-        profile_page = ProfilePage(driver)
-        
-        with allure.step("Кликаем по ссылке 'История заказов'"):
+            profile_page = ProfilePage(driver)
             profile_page.click_order_history_link()
         
         with allure.step("Проверяем, что открылась страница истории заказов"):

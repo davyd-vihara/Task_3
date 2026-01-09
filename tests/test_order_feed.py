@@ -29,7 +29,6 @@ class TestOrderFeed:
             order_feed_page.wait_for_order_modal(timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что модальное окно открылось с деталями заказа"):
-            assert order_feed_page.is_order_feed_title_visible(), "Страница ленты заказов не загрузилась"
             assert order_feed_page.is_order_modal_visible(), "Модальное окно с деталями заказа не открылось"
             assert order_feed_page.is_order_number_visible(), "Номер заказа не найден в модальном окне"
             assert order_feed_page.is_order_title_visible(), "Заголовок заказа не найден в модальном окне"

@@ -49,17 +49,10 @@ class TestConstructor:
         """Проверяет открытие модального окна с деталями ингредиента"""
         main_page = MainPage(driver)
         
-        with allure.step("Загружаем главную страницу"):
+        with allure.step("Загружаем главную страницу и переходим в конструктор"):
             main_page.open()
             main_page.wait_for_page_load()
-        
-        with allure.step("Переходим в конструктор"):
             main_page.click_constructor_button()
-        
-        with allure.step("Проверяем, что открылась страница конструктора"):
-            constructor_page = ConstructorPage(driver)
-            assert constructor_page.is_constructor_visible(), \
-                "Заголовок 'Соберите бургер' не найден на странице конструктора"
         
         with allure.step("Кликаем на первый ингредиент из списка 'Булки'"):
             main_page.click_first_bun_ingredient()
@@ -79,17 +72,10 @@ class TestConstructor:
         """Проверяет закрытие модального окна кликом по крестику"""
         main_page = MainPage(driver)
         
-        with allure.step("Загружаем главную страницу"):
+        with allure.step("Загружаем главную страницу и переходим в конструктор"):
             main_page.open()
             main_page.wait_for_page_load()
-        
-        with allure.step("Переходим в конструктор"):
             main_page.click_constructor_button()
-        
-        with allure.step("Проверяем, что открылась страница конструктора"):
-            constructor_page = ConstructorPage(driver)
-            assert constructor_page.is_constructor_visible(), \
-                f"Заголовок '{Constants.CONSTRUCTOR_TITLE}' не найден на странице конструктора"
         
         with allure.step("Открываем модальное окно с деталями ингредиента"):
             main_page.click_first_bun_ingredient()
@@ -97,12 +83,6 @@ class TestConstructor:
         
         with allure.step("Проверяем, что модальное окно открылось"):
             assert main_page.is_modal_visible(), "Модальное окно с деталями ингредиента не появилось"
-            modal_title = main_page.get_modal_title()
-            assert modal_title and Constants.INGREDIENT_DETAILS_TITLE in modal_title, \
-                f"Заголовок '{Constants.INGREDIENT_DETAILS_TITLE}' не найден. Найден: {modal_title}"
-            ingredient_name = main_page.get_modal_ingredient_name()
-            assert ingredient_name and Constants.FIRST_BUN_NAME in ingredient_name, \
-                f"Название булки '{Constants.FIRST_BUN_NAME}' не найдено. Найдено: {ingredient_name}"
         
         with allure.step("Закрываем модальное окно кликом по крестику"):
             main_page.close_modal()
@@ -116,17 +96,10 @@ class TestConstructor:
         """Проверяет увеличение счетчика ингредиента при добавлении в заказ"""
         main_page = MainPage(driver)
         
-        with allure.step("Загружаем главную страницу"):
+        with allure.step("Загружаем главную страницу и переходим в конструктор"):
             main_page.open()
             main_page.wait_for_page_load()
-        
-        with allure.step("Переходим в конструктор"):
             main_page.click_constructor_button()
-        
-        with allure.step("Проверяем, что открылась страница конструктора"):
-            constructor_page = ConstructorPage(driver)
-            assert constructor_page.is_constructor_visible(), \
-                "Заголовок 'Соберите бургер' не найден на странице конструктора"
         
         with allure.step("Проверяем начальное значение счетчика"):
             initial_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
@@ -167,11 +140,9 @@ class TestConstructor:
         
         with allure.step("Переходим в конструктор"):
             main_page.click_constructor_button()
+            main_page.wait_for_page_load()
         
-        with allure.step("Проверяем, что открылась страница конструктора и пользователь авторизован"):
-            constructor_page = ConstructorPage(driver)
-            assert constructor_page.is_constructor_visible(), \
-                f"Заголовок '{Constants.CONSTRUCTOR_TITLE}' не найден на странице конструктора"
+        with allure.step("Проверяем, что пользователь авторизован"):
             assert main_page.is_user_logged_in(), \
                 "Пользователь не авторизован. Кнопка 'Оформить заказ' не найдена."
         

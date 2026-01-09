@@ -43,29 +43,31 @@ class OrderFeedPage(BasePage):
         # Пробуем найти модальное окно разными способами
         wait = self.get_wait(timeout)
         
-        def modal_appeared(driver):
-            # Пробуем разные варианты локаторов
-            locators_to_try = [
-                self.locators.ORDER_MODAL,
-                self.locators.ORDER_MODAL_ALTERNATIVE_1,
-                self.locators.ORDER_MODAL_ALTERNATIVE_2,
-                self.locators.ORDER_MODAL_ALTERNATIVE_3,
-            ]
-            
-            for locator in locators_to_try:
-                try:
-                    element = driver.find_element(*locator)
-                    if element and element.is_displayed():
-                        return True
-                except (NoSuchElementException, WebDriverException):
-                    continue
-            return False
+        # Пробуем разные варианты локаторов
+        locators_to_try = [
+            self.locators.ORDER_MODAL,
+            self.locators.ORDER_MODAL_ALTERNATIVE_1,
+            self.locators.ORDER_MODAL_ALTERNATIVE_2,
+            self.locators.ORDER_MODAL_ALTERNATIVE_3,
+        ]
         
+        # Пробуем каждый локатор через expected_conditions
+        for locator in locators_to_try:
+            try:
+                wait.until(EC.presence_of_element_located(locator))
+                # Проверяем, что элемент видим
+                element = self.find_element_direct(*locator)
+                if element and element.is_displayed():
+                    return
+            except (NoSuchElementException, WebDriverException, TimeoutException):
+                continue
+        
+        # Если ни один локатор не сработал, пробуем еще раз с базовым локатором
         try:
-            wait.until(modal_appeared)
-        except TimeoutException:
-            # Если не удалось найти, пробуем еще раз с базовым локатором
             self.wait_for_element_to_be_visible(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
+        except TimeoutException:
+            # Если и это не помогло, выбрасываем исключение
+            raise TimeoutException("Модальное окно заказа не появилось")
     
     @allure.step("Закрыть модальное окно заказа")
     def close_order_modal(self):
@@ -101,6 +103,15 @@ class OrderFeedPage(BasePage):
                 pass
             return 0
     
+    @allure.step("Ожидать увеличения счетчика 'Выполнено за всё время'")
+    def wait_for_total_orders_increase(self, initial_value, timeout=None):
+        """Ожидает, пока счетчик 'Выполнено за всё время' станет больше начального значения"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_VERY_LONG
+        wait = self.get_wait(timeout)
+        # Используем lambda с self вместо driver
+        return wait.until(lambda _: self.get_total_orders_count() > initial_value)
+    
     @allure.step("Получить счетчик 'Выполнено за сегодня'")
     def get_today_orders_count(self):
         """Получает счетчик 'Выполнено за сегодня'"""
@@ -108,6 +119,15 @@ class OrderFeedPage(BasePage):
             return int(self.get_text(self.locators.TODAY_ORDERS_COUNTER))
         except (TimeoutException, NoSuchElementException, ValueError, AttributeError):
             return 0
+    
+    @allure.step("Ожидать увеличения счетчика 'Выполнено за сегодня'")
+    def wait_for_today_orders_increase(self, initial_value, timeout=None):
+        """Ожидает, пока счетчик 'Выполнено за сегодня' станет больше начального значения"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_VERY_LONG
+        wait = self.get_wait(timeout)
+        # Используем lambda с self вместо driver
+        return wait.until(lambda _: self.get_today_orders_count() > initial_value)
     
     @allure.step("Получить список заказов в работе")
     def get_in_progress_orders(self):
@@ -129,6 +149,15 @@ class OrderFeedPage(BasePage):
                 return [order.text for order in orders if order.text]
             except (TimeoutException, NoSuchElementException, WebDriverException):
                 return []
+    
+    @allure.step("Ожидать появления заказа в разделе 'В работе'")
+    def wait_for_order_in_progress(self, order_number, timeout=None):
+        """Ожидает, пока заказ появится в разделе 'В работе'"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_VERY_LONG
+        wait = self.get_wait(timeout)
+        # Используем lambda с self вместо driver
+        return wait.until(lambda _: self.is_order_in_progress(order_number))
     
     @allure.step("Проверить, есть ли заказ в разделе 'В работе'")
     def is_order_in_progress(self, order_number):

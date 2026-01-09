@@ -4,8 +4,6 @@ from pages.order_feed_page import OrderFeedPage
 from pages.main_page import MainPage
 from pages.login_page import LoginPage
 from config.constants import Constants
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 
 @allure.feature("Основной функционал")
@@ -161,13 +159,11 @@ class TestConstructor:
             login_page.open()
             login_page.login(user_email, user_password)
             
-            wait = WebDriverWait(driver, Constants.TIMEOUT_LONG)
-            wait.until(lambda d: "/login" not in d.current_url)
-            
+            # Метод login() уже ждет изменения URL, поэтому просто открываем главную страницу
             main_page.open()
             main_page.wait_for_page_load()
-            wait = WebDriverWait(driver, Constants.TIMEOUT_MEDIUM)
-            wait.until(lambda d: main_page.is_user_logged_in())
+            # Ждем авторизации через метод из Page Object
+            main_page.wait_until_user_logged_in(timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что авторизация прошла успешно"):
             assert main_page.is_user_logged_in(), \
@@ -214,20 +210,3 @@ class TestConstructor:
                 f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"
             assert Constants.ORDER_WAIT_TEXT in modal_text, \
                 f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"
-
-        assert main_page.is_modal_visible(), "Модальное окно заказа не появилось"
-        assert main_page.is_order_success_visible(), \
-            "Идентификатор заказа не найден в модальном окне"
-        order_number = main_page.get_order_number_from_modal(timeout=Constants.TIMEOUT_MODAL_LOAD)
-        assert order_number and order_number.strip(), \
-            f"Номер заказа не найден в модальном окне. Получено: {order_number}"
-        assert main_page.is_order_cooking_text_visible(), \
-            f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне"
-        assert main_page.is_order_wait_text_visible(), \
-            f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне"
-        modal_text = main_page.get_order_modal_text()
-        assert modal_text, "Не удалось получить текст модального окна"
-        assert Constants.ORDER_COOKING_TEXT in modal_text, \
-            f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"
-        assert Constants.ORDER_WAIT_TEXT in modal_text, \
-            f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"

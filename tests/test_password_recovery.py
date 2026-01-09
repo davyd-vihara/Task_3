@@ -3,8 +3,6 @@ from pages.login_page import LoginPage
 from pages.password_recovery_page import PasswordRecoveryPage
 from config.urls import Urls
 from config.constants import Constants
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Восстановление пароля")
 @allure.story("Функциональность восстановления пароля")
@@ -22,7 +20,8 @@ class TestPasswordRecovery:
             login_page.click_recover_password_link()
         
         with allure.step("Проверяем, что открылась страница восстановления пароля"):
-            assert Urls.FORGOT_PASSWORD_PAGE in driver.current_url, "Страница восстановления пароля не открылась"
+            recovery_page = PasswordRecoveryPage(driver)
+            assert Urls.FORGOT_PASSWORD_PAGE in recovery_page.get_current_url(), "Страница восстановления пароля не открылась"
     
     @allure.title("Ввод почты для восстановления пароля")
     def test_input_email_for_recovery(self, driver, registered_user):
@@ -40,7 +39,7 @@ class TestPasswordRecovery:
             recovery_page.wait_for_url_contains("/reset-password", timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что открылась страница ввода кода"):
-            assert Urls.RESET_PASSWORD_PAGE in driver.current_url, "Страница ввода кода не открылась"
+            assert Urls.RESET_PASSWORD_PAGE in recovery_page.get_current_url(), "Страница ввода кода не открылась"
     
     @allure.title("Показать/скрыть пароль подсвечивает поле")
     def test_password_visibility_toggle(self, driver, registered_user):

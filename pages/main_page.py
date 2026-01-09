@@ -3,8 +3,6 @@ from locators.main_locators import MainPageLocators
 from locators.order_feed_locators import OrderFeedPageLocators
 from config.urls import Urls
 from config.constants import Constants
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import re
@@ -144,6 +142,14 @@ class MainPage(BasePage):
         # Упрощенная проверка: если кнопка видна - true, если нет - false
         return self.is_element_visible(self.locators.ORDER_BUTTON, timeout=Constants.TIMEOUT_MODAL_LOAD)
     
+    @allure.step("Ожидать авторизации пользователя")
+    def wait_until_user_logged_in(self, timeout=None):
+        """Ожидает, пока пользователь станет авторизованным"""
+        if timeout is None:
+            timeout = Constants.TIMEOUT_MEDIUM
+        wait = self.get_wait(timeout)
+        return wait.until(lambda d: self.is_user_logged_in())
+    
     @allure.step("Кликнуть по кнопке 'Оформить заказ'")
     def click_order_button(self):
         """Кликает по кнопке 'Оформить заказ'"""
@@ -196,44 +202,25 @@ class MainPage(BasePage):
         # Ждем появления номера заказа (h2) или текста "идентификатор заказа"
         wait = self.get_wait(timeout)
         
-        # Ждем, пока появится номер заказа (h2) с цифрами
-        # В lambda функции используем driver напрямую, так как это стандартный паттерн для WebDriverWait
-        def order_number_loaded(driver):
-            try:
-                # Проверяем наличие номера заказа (h2)
-                order_number_elem = driver.find_element(*OrderFeedPageLocators.ORDER_NUMBER)
-                if order_number_elem and order_number_elem.is_displayed():
-                    order_text = order_number_elem.text.strip()
-                    # Проверяем, что номер заказа содержит цифры и не пустой
-                    if order_text and any(char.isdigit() for char in order_text):
-                        return True
-            except (NoSuchElementException, TimeoutException):
-                pass
-            
-            # Или проверяем наличие текста "идентификатор заказа"
-            try:
-                identifier_elem = driver.find_element(*OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT)
-                if identifier_elem and identifier_elem.is_displayed():
-                    # Если есть текст "идентификатор заказа", ждем появления номера заказа через expected_conditions
-                    try:
-                        # Ждем появления номера заказа с цифрами
-                        WebDriverWait(driver, Constants.TIMEOUT_SHORT).until(
-                            lambda d: any(char.isdigit() for char in d.find_element(*OrderFeedPageLocators.ORDER_NUMBER).text.strip())
-                        )
-                        return True
-                    except (NoSuchElementException, TimeoutException, AttributeError):
-                        # Если номер не появился, все равно возвращаем True, так как идентификатор найден
-                        return True
-            except (NoSuchElementException, TimeoutException):
-                pass
-            return False
-        
+        # Сначала проверяем наличие текста "идентификатор заказа" (надежный маркер)
         try:
-            wait.until(order_number_loaded)
+            wait.until(EC.presence_of_element_located(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT))
         except TimeoutException:
-            # Если не удалось дождаться, проверяем наличие хотя бы текста "идентификатор заказа"
-            if not self.is_element_visible(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT, timeout=Constants.TIMEOUT_DEFAULT):
-                raise TimeoutException("Не удалось дождаться появления номера заказа в модальном окне")
+            raise TimeoutException("Не удалось дождаться появления идентификатора заказа в модальном окне")
+        
+        # Затем ждем появления номера заказа с цифрами
+        try:
+            short_wait = self.get_wait(Constants.TIMEOUT_SHORT)
+            short_wait.until(EC.presence_of_element_located(OrderFeedPageLocators.ORDER_NUMBER))
+            # Проверяем, что номер содержит цифры
+            order_number_elem = self.find_element_direct(*OrderFeedPageLocators.ORDER_NUMBER)
+            if order_number_elem:
+                order_text = order_number_elem.text.strip()
+                if order_text and any(char.isdigit() for char in order_text):
+                    return
+        except (NoSuchElementException, TimeoutException, AttributeError):
+            # Если номер не появился, это не критично, так как идентификатор уже найден
+            pass
     
     @allure.step("Получить номер заказа из модального окна")
     def get_order_number_from_modal(self, timeout=None):

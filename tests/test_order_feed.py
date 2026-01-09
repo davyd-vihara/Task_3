@@ -5,8 +5,6 @@ from pages.main_page import MainPage
 from pages.order_feed_page import OrderFeedPage
 from config.constants import Constants
 from config.urls import Urls
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Лента заказов")
 @allure.story("Функциональность ленты заказов")
@@ -49,7 +47,7 @@ class TestOrderFeed:
         
         with allure.step("Проверяем, что открылась страница ленты заказов"):
             order_feed_page = OrderFeedPage(driver)
-            assert Urls.ORDER_FEED_PAGE in driver.current_url, "Страница ленты заказов не открылась"
+            assert Urls.ORDER_FEED_PAGE in order_feed_page.get_current_url(), "Страница ленты заказов не открылась"
             assert order_feed_page.is_order_feed_title_visible(), "Страница ленты заказов не загрузилась"
     
     @allure.title("Увеличение счетчика 'Выполнено за всё время'")
@@ -92,17 +90,14 @@ class TestOrderFeed:
         
         with allure.step("Закрываем модальное окно и переходим в ленту заказов"):
             main_page.close_modal()
-            main_page.wait_for_element_to_disappear(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
-            wait_before_feed = WebDriverWait(driver, Constants.TIMEOUT_MODAL_LOAD)
-            wait_before_feed.until(EC.invisibility_of_element_located(main_page.locators.MODAL))
+            main_page.wait_for_element_to_disappear(main_page.locators.MODAL, timeout=Constants.TIMEOUT_MODAL_LOAD)
             
             main_page.click_order_feed_button()
             order_feed_page = OrderFeedPage(driver)
             order_feed_page.wait_for_element_to_be_visible(order_feed_page.locators.ORDER_FEED_TITLE, timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Ожидаем обновления счетчика 'Выполнено за всё время'"):
-            wait = WebDriverWait(driver, Constants.TIMEOUT_VERY_LONG)
-            wait.until(lambda d: order_feed_page.get_total_orders_count() > initial_total)
+            order_feed_page.wait_for_total_orders_increase(initial_total, timeout=Constants.TIMEOUT_VERY_LONG)
             new_total = order_feed_page.get_total_orders_count()
         
         with allure.step("Проверяем, что счетчик 'Выполнено за всё время' увеличился"):
@@ -149,17 +144,14 @@ class TestOrderFeed:
         
         with allure.step("Закрываем модальное окно и переходим в ленту заказов"):
             main_page.close_modal()
-            main_page.wait_for_element_to_disappear(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
-            wait_before_feed = WebDriverWait(driver, Constants.TIMEOUT_MODAL_LOAD)
-            wait_before_feed.until(EC.invisibility_of_element_located(main_page.locators.MODAL))
+            main_page.wait_for_element_to_disappear(main_page.locators.MODAL, timeout=Constants.TIMEOUT_MODAL_LOAD)
             
             main_page.click_order_feed_button()
             order_feed_page = OrderFeedPage(driver)
             order_feed_page.wait_for_element_to_be_visible(order_feed_page.locators.ORDER_FEED_TITLE, timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Ожидаем обновления счетчика 'Выполнено за сегодня'"):
-            wait = WebDriverWait(driver, Constants.TIMEOUT_VERY_LONG)
-            wait.until(lambda d: order_feed_page.get_today_orders_count() > initial_today)
+            order_feed_page.wait_for_today_orders_increase(initial_today, timeout=Constants.TIMEOUT_VERY_LONG)
             new_today = order_feed_page.get_today_orders_count()
         
         with allure.step("Проверяем, что счетчик 'Выполнено за сегодня' увеличился"):
@@ -201,8 +193,7 @@ class TestOrderFeed:
         
         with allure.step("Ожидаем обновления раздела 'В работе'"):
             order_num = re.sub(r'\D', '', str(order_number))
-            wait = WebDriverWait(driver, Constants.TIMEOUT_VERY_LONG)
-            wait.until(lambda d: order_feed_page.is_order_in_progress(order_num))
+            order_feed_page.wait_for_order_in_progress(order_num, timeout=Constants.TIMEOUT_VERY_LONG)
         
         with allure.step("Проверяем, что заказ появился в разделе 'В работе'"):
             assert order_feed_page.is_order_in_progress(order_num), \

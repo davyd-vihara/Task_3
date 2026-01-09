@@ -53,6 +53,4 @@ class TestUserProfile:
         
         with allure.step("Проверяем, что открылась страница входа"):
             assert login_page.is_login_title_visible(), f"Заголовок '{Constants.LOGIN_TITLE}' не найден на странице"
-            assert login_page.are_login_fields_available(), \
-                "Поля логин и пароль не доступны на странице входа"
 

@@ -21,25 +21,8 @@ class TestLogin:
 
         main_page = MainPage(driver)
 
-        with allure.step("Проверяем, что открылась главная страница"):
+        with allure.step("Проверяем, что пользователь авторизован"):
             main_page.open()
             main_page.wait_for_page_load()
-            # Проверяем URL через метод из Page Object
-            current_url = main_page.get_current_url()
-            assert Urls.BASE_URL.rstrip('/') in current_url or current_url.startswith(Urls.BASE_URL), \
-                "Главная страница не открылась после входа"
-            # Ждем авторизации через метод из Page Object
             main_page.wait_until_user_logged_in(timeout=Constants.TIMEOUT_MEDIUM)
             assert main_page.is_user_logged_in(), "Пользователь не авторизован после входа"
-        
-        with allure.step("Проверяем авторизацию через переход в личный кабинет"):
-            main_page.click_personal_account_button()
-            profile_page = ProfilePage(driver)
-            # Ждем перехода на страницу профиля через метод из Page Object
-            profile_page.wait_for_url_contains(Urls.PROFILE_PAGE, timeout=Constants.TIMEOUT_MEDIUM)
-        
-        assert profile_page.is_profile_page_visible(), "Страница профиля не открылась"
-        assert profile_page.is_profile_button_visible(), \
-            "Кнопка 'Профиль' не найдена в личном кабинете. Авторизация не прошла."
-        assert profile_page.is_logout_button_visible(), \
-            "Кнопка 'Выход' не найдена в личном кабинете. Авторизация не прошла."

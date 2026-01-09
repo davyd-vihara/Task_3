@@ -5,7 +5,6 @@ from config.urls import Urls
 from config.constants import Constants
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 import re
 import allure
 
@@ -55,26 +54,9 @@ class OrderFeedPage(BasePage):
     @allure.step("Получить счетчик 'Выполнено за всё время'")
     def get_total_orders_count(self):
         """Получает счетчик 'Выполнено за всё время'"""
-        try:
-            # Ждем появления элемента счетчика
-            self.wait_for_element_to_be_visible(self.locators.TOTAL_ORDERS_COUNTER, timeout=Constants.TIMEOUT_DEFAULT)
-            # Пробуем получить значение через локатор
-            count_text = self.get_text(self.locators.TOTAL_ORDERS_COUNTER)
-            # Убираем пробелы и преобразуем в число
-            count = int(count_text.strip().replace(' ', ''))
-            return count
-        except (TimeoutException, NoSuchElementException, ValueError, AttributeError) as e:
-            # Если не получилось, пробуем альтернативный способ
-            try:
-                # Используем JavaScript селектор напрямую
-                count_text = self.execute_script(
-                    "return document.querySelector('#root > div > main > div > div > div > div.undefined.mb-15 > p.OrderFeed_number__2MbrQ.text.text_type_digits-large')?.textContent || '';"
-                )
-                if count_text:
-                    return int(count_text.strip().replace(' ', ''))
-            except (ValueError, AttributeError):
-                pass
-            return 0
+        self.wait_for_element_to_be_visible(self.locators.TOTAL_ORDERS_COUNTER, timeout=Constants.TIMEOUT_DEFAULT)
+        count_text = self.get_text(self.locators.TOTAL_ORDERS_COUNTER)
+        return int(count_text.strip().replace(' ', ''))
     
     @allure.step("Ожидать увеличения счетчика 'Выполнено за всё время'")
     def wait_for_total_orders_increase(self, initial_value, timeout=None):
@@ -88,10 +70,7 @@ class OrderFeedPage(BasePage):
     @allure.step("Получить счетчик 'Выполнено за сегодня'")
     def get_today_orders_count(self):
         """Получает счетчик 'Выполнено за сегодня'"""
-        try:
-            return int(self.get_text(self.locators.TODAY_ORDERS_COUNTER))
-        except (TimeoutException, NoSuchElementException, ValueError, AttributeError):
-            return 0
+        return int(self.get_text(self.locators.TODAY_ORDERS_COUNTER))
     
     @allure.step("Ожидать увеличения счетчика 'Выполнено за сегодня'")
     def wait_for_today_orders_increase(self, initial_value, timeout=None):
@@ -105,23 +84,11 @@ class OrderFeedPage(BasePage):
     @allure.step("Получить список заказов в работе")
     def get_in_progress_orders(self):
         """Получает список заказов в работе"""
-        try:
-            # Сначала проверяем, что раздел "В работе" существует с коротким таймаутом
-            if not self.is_element_visible(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT):
-                return []
-            
-            # Получаем список заказов с коротким таймаутом
-            orders = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
-            return [order.text for order in orders if order.text]
-        except (TimeoutException, NoSuchElementException, WebDriverException) as e:
-            # Пробуем альтернативный способ поиска
-            try:
-                # Ищем все элементы li в разделе "В работе" с коротким таймаутом
-                section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT)
-                orders = section.find_elements(By.TAG_NAME, "li")
-                return [order.text for order in orders if order.text]
-            except (TimeoutException, NoSuchElementException, WebDriverException):
-                return []
+        if not self.is_element_visible(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT):
+            return []
+        
+        orders = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
+        return [order.text for order in orders if order.text]
     
     @allure.step("Ожидать появления заказа в разделе 'В работе'")
     def wait_for_order_in_progress(self, order_number, timeout=None):
@@ -137,37 +104,19 @@ class OrderFeedPage(BasePage):
         """Проверяет, есть ли заказ в разделе 'В работе'"""
         order_num_normalized = re.sub(r'\D', '', str(order_number))
         
-        # Сначала пробуем найти через текст раздела "В работе"
-        try:
-            section = self.find_element(self.locators.IN_PROGRESS_SECTION, timeout=Constants.TIMEOUT_SHORT)
-            section_text_normalized = re.sub(r'\D', '', section.text)
-            if order_num_normalized in section_text_normalized:
-                return True
-        except (TimeoutException, NoSuchElementException, WebDriverException):
-            pass
-        
         # Пробуем найти через элементы списка
-        try:
-            in_progress_elements = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
-            for element in in_progress_elements:
-                try:
-                    element_text_normalized = re.sub(r'\D', '', str(element.text))
-                    if order_num_normalized in element_text_normalized or element_text_normalized in order_num_normalized:
-                        return True
-                except (AttributeError, ValueError):
-                    continue
-        except (TimeoutException, NoSuchElementException, WebDriverException):
-            pass
+        in_progress_elements = self.find_elements(self.locators.IN_PROGRESS_ORDERS, timeout=Constants.TIMEOUT_SHORT)
+        for element in in_progress_elements:
+            element_text_normalized = re.sub(r'\D', '', str(element.text))
+            if order_num_normalized in element_text_normalized or element_text_normalized in order_num_normalized:
+                return True
         
         # Если не нашли, пробуем через get_in_progress_orders
-        try:
-            orders = self.get_in_progress_orders()
-            for order_text in orders:
-                order_text_normalized = re.sub(r'\D', '', str(order_text))
-                if order_num_normalized in order_text_normalized or order_text_normalized in order_num_normalized:
-                    return True
-        except (TimeoutException, NoSuchElementException, WebDriverException):
-            pass
+        orders = self.get_in_progress_orders()
+        for order_text in orders:
+            order_text_normalized = re.sub(r'\D', '', str(order_text))
+            if order_num_normalized in order_text_normalized or order_text_normalized in order_num_normalized:
+                return True
         
         return False
     

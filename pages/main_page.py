@@ -192,43 +192,32 @@ class MainPage(BasePage):
     
     @allure.step("Ожидать появления и загрузки номера заказа в модальном окне")
     def wait_for_order_number(self, timeout=None):
-        """Ожидает появления номера заказа в модальном окне и его обновления"""
+        """Ожидает появления номера заказа в модальном окне"""
         if timeout is None:
             timeout = Constants.TIMEOUT_VERY_LONG
         
-        # Сначала ждем появления модального окна
+        # Ждем появления модального окна
         self.wait_for_element_to_be_visible(self.locators.MODAL, timeout=timeout)
         
-        # Ждем появления номера заказа (h2) или текста "идентификатор заказа"
+        # Ждем появления текста "идентификатор заказа" (надежный маркер)
         wait = self.get_wait(timeout)
+        wait.until(EC.presence_of_element_located(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT))
         
-        # Сначала проверяем наличие текста "идентификатор заказа" (надежный маркер)
-        try:
-            wait.until(EC.presence_of_element_located(OrderFeedPageLocators.ORDER_IDENTIFIER_TEXT))
-        except TimeoutException:
-            raise TimeoutException("Не удалось дождаться появления идентификатора заказа в модальном окне")
-        
-        # Затем ждем появления номера заказа с цифрами
+        # Ждем появления номера заказа (может появиться не сразу)
         try:
             short_wait = self.get_wait(Constants.TIMEOUT_SHORT)
             short_wait.until(EC.presence_of_element_located(OrderFeedPageLocators.ORDER_NUMBER))
-            # Проверяем, что номер содержит цифры
-            order_number_elem = self.find_element_direct(*OrderFeedPageLocators.ORDER_NUMBER)
-            if order_number_elem:
-                order_text = order_number_elem.text.strip()
-                if order_text and any(char.isdigit() for char in order_text):
-                    return
-        except (NoSuchElementException, TimeoutException, AttributeError):
-            # Если номер не появился, это не критично, так как идентификатор уже найден
+        except TimeoutException:
+            # Если номер не появился сразу, это не критично, так как идентификатор уже найден
             pass
     
     @allure.step("Получить номер заказа из модального окна")
     def get_order_number_from_modal(self, timeout=None):
-        """Получает номер заказа из модального окна с увеличенным таймаутом и альтернативными способами"""
+        """Получает номер заказа из модального окна"""
         if timeout is None:
             timeout = Constants.TIMEOUT_VERY_LONG
         
-        # Сначала пытаемся получить номер заказа через локатор h2 с увеличенным таймаутом
+        # Пытаемся получить номер заказа через локатор
         try:
             element = self.find_visible_element(OrderFeedPageLocators.ORDER_NUMBER, timeout=timeout)
             order_number = element.text.strip()
@@ -241,15 +230,12 @@ class MainPage(BasePage):
         try:
             modal_text = self.get_order_modal_text()
             if modal_text:
-                # Ищем число в тексте модального окна (номер заказа обычно большое число)
-                # Ищем числа из 4+ цифр (номера заказов обычно большие)
                 numbers = re.findall(r'\d{4,}', modal_text)
                 if numbers:
                     return numbers[0]
         except (AttributeError, ValueError):
             pass
         
-        # Если ничего не нашли, возвращаем None
         return None
     
     @allure.step("Кликнуть по ссылке восстановления пароля")

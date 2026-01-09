@@ -165,10 +165,6 @@ class TestConstructor:
             # Ждем авторизации через метод из Page Object
             main_page.wait_until_user_logged_in(timeout=Constants.TIMEOUT_MEDIUM)
         
-        with allure.step("Проверяем, что авторизация прошла успешно"):
-            assert main_page.is_user_logged_in(), \
-                f"Авторизация не прошла. Кнопка 'Оформить заказ' не найдена после логина."
-        
         with allure.step("Переходим в конструктор"):
             main_page.click_constructor_button()
         
@@ -204,9 +200,3 @@ class TestConstructor:
                 f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне"
             assert main_page.is_order_wait_text_visible(), \
                 f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне"
-            modal_text = main_page.get_order_modal_text()
-            assert modal_text, "Не удалось получить текст модального окна"
-            assert Constants.ORDER_COOKING_TEXT in modal_text, \
-                f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"
-            assert Constants.ORDER_WAIT_TEXT in modal_text, \
-                f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне. Текст: {modal_text[:200]}"

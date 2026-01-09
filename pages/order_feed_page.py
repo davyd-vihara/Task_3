@@ -40,34 +40,7 @@ class OrderFeedPage(BasePage):
         if timeout is None:
             timeout = Constants.TIMEOUT_LONG
         
-        # Пробуем найти модальное окно разными способами
-        wait = self.get_wait(timeout)
-        
-        # Пробуем разные варианты локаторов
-        locators_to_try = [
-            self.locators.ORDER_MODAL,
-            self.locators.ORDER_MODAL_ALTERNATIVE_1,
-            self.locators.ORDER_MODAL_ALTERNATIVE_2,
-            self.locators.ORDER_MODAL_ALTERNATIVE_3,
-        ]
-        
-        # Пробуем каждый локатор через expected_conditions
-        for locator in locators_to_try:
-            try:
-                wait.until(EC.presence_of_element_located(locator))
-                # Проверяем, что элемент видим
-                element = self.find_element_direct(*locator)
-                if element and element.is_displayed():
-                    return
-            except (NoSuchElementException, WebDriverException, TimeoutException):
-                continue
-        
-        # Если ни один локатор не сработал, пробуем еще раз с базовым локатором
-        try:
-            self.wait_for_element_to_be_visible(self.locators.ORDER_MODAL, timeout=Constants.TIMEOUT_DEFAULT)
-        except TimeoutException:
-            # Если и это не помогло, выбрасываем исключение
-            raise TimeoutException("Модальное окно заказа не появилось")
+        self.wait_for_element_to_be_visible(self.locators.ORDER_MODAL, timeout=timeout)
     
     @allure.step("Закрыть модальное окно заказа")
     def close_order_modal(self):

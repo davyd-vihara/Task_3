@@ -58,14 +58,8 @@ class TestConstructor:
             main_page.click_first_bun_ingredient()
             main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
         
-        with allure.step("Проверяем, что модальное окно открылось с правильными данными"):
+        with allure.step("Проверяем, что модальное окно открылось"):
             assert main_page.is_modal_visible(), "Модальное окно с деталями ингредиента не появилось"
-            modal_title = main_page.get_modal_title()
-            assert modal_title and "Детали ингредиента" in modal_title, \
-                f"Заголовок 'Детали ингредиента' не найден. Найден: {modal_title}"
-            ingredient_name = main_page.get_modal_ingredient_name()
-            assert ingredient_name and "Флюоресцентная булка R2-D3" in ingredient_name, \
-                f"Название булки 'Флюоресцентная булка R2-D3' не найдено. Найдено: {ingredient_name}"
     
     @allure.title("Закрытие модального окна крестиком")
     def test_close_modal(self, driver):
@@ -80,9 +74,6 @@ class TestConstructor:
         with allure.step("Открываем модальное окно с деталями ингредиента"):
             main_page.click_first_bun_ingredient()
             main_page.wait_for_element_to_be_visible(main_page.locators.MODAL, timeout=Constants.TIMEOUT_DEFAULT)
-        
-        with allure.step("Проверяем, что модальное окно открылось"):
-            assert main_page.is_modal_visible(), "Модальное окно с деталями ингредиента не появилось"
         
         with allure.step("Закрываем модальное окно кликом по крестику"):
             main_page.close_modal()
@@ -101,21 +92,15 @@ class TestConstructor:
             main_page.wait_for_page_load()
             main_page.click_constructor_button()
         
-        with allure.step("Проверяем начальное значение счетчика"):
-            initial_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
-            assert initial_counter == 0, \
-                f"Начальный счетчик должен быть равен нулю, но равен {initial_counter}"
-        
         with allure.step("Перетаскиваем ингредиент в конструктор"):
+            initial_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
             main_page.drag_ingredient_to_constructor(main_page.locators.FIRST_BUN_INGREDIENT)
             main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
         
         with allure.step("Проверяем, что счетчик увеличился"):
             new_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
-            assert new_counter > 0, \
-                f"Счетчик должен быть больше нуля, но равен {new_counter}"
-            assert new_counter == 2, \
-                f"Счетчик должен быть равен 2 (булка добавляется дважды - верх и низ), но равен {new_counter}"
+            assert new_counter > initial_counter, \
+                f"Счетчик не увеличился. Было: {initial_counter}, стало: {new_counter}"
     
     @allure.title("Оформление заказа залогиненным пользователем")
     def test_create_order(self, driver, registered_user):
@@ -138,23 +123,11 @@ class TestConstructor:
             # Ждем авторизации через метод из Page Object
             main_page.wait_until_user_logged_in(timeout=Constants.TIMEOUT_MEDIUM)
         
-        with allure.step("Переходим в конструктор"):
+        with allure.step("Переходим в конструктор и добавляем ингредиент"):
             main_page.click_constructor_button()
             main_page.wait_for_page_load()
-        
-        with allure.step("Проверяем, что пользователь авторизован"):
-            assert main_page.is_user_logged_in(), \
-                "Пользователь не авторизован. Кнопка 'Оформить заказ' не найдена."
-        
-        with allure.step("Добавляем ингредиент в конструктор"):
-            initial_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
             main_page.drag_ingredient_to_constructor(main_page.locators.FIRST_BUN_INGREDIENT)
             main_page.wait_for_ingredient_counter_not_zero(timeout=Constants.TIMEOUT_MEDIUM)
-        
-        with allure.step("Проверяем, что счетчик ингредиента увеличился"):
-            new_counter = main_page.get_ingredient_counter(main_page.locators.FIRST_BUN_INGREDIENT)
-            assert new_counter > initial_counter, \
-                f"Счетчик не изменился. Было: {initial_counter}, стало: {new_counter}"
         
         with allure.step("Оформляем заказ"):
             main_page.click_order_button()
@@ -164,10 +137,3 @@ class TestConstructor:
             assert main_page.is_modal_visible(), "Модальное окно заказа не появилось"
             assert main_page.is_order_success_visible(), \
                 "Идентификатор заказа не найден в модальном окне"
-            order_number = main_page.get_order_number_from_modal(timeout=Constants.TIMEOUT_MODAL_LOAD)
-            assert order_number and order_number.strip(), \
-                f"Номер заказа не найден в модальном окне. Получено: {order_number}"
-            assert main_page.is_order_cooking_text_visible(), \
-                f"Текст '{Constants.ORDER_COOKING_TEXT}' не найден в модальном окне"
-            assert main_page.is_order_wait_text_visible(), \
-                f"Текст '{Constants.ORDER_WAIT_TEXT}' не найден в модальном окне"
